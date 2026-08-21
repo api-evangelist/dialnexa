@@ -1,0 +1,56 @@
+name: DialNexa
+description: >-
+  A voice AI platform that gives businesses human-sounding agents for inbound and outbound phone conversations. Agents
+  hold natural conversations, follow scripts, keep context, qualify leads, answer FAQs, run eligibility checks, schedule
+  meetings, send payment links, and log outcomes into CRMs and internal tools.
+url: https://raw.githubusercontent.com/api-evangelist/dialnexa/refs/heads/main/apis.yml
+created: '2026-08-21'
+modified: '2026-08-21'
+specificationVersion: '0.21'
+tags:
+  - Voice
+  - AI Agents
+  - Conversational AI
+  - Telephony
+  - Communications
+  - CRM
+  - Sales Automation
+  - Customer Support
+apis:
+  - name: DialNexa API
+    description: >-
+      Public /v1 REST API for the DialNexa voice AI platform, covering Agents, Batch Calls, Calls, Knowledge Base,
+      Languages, LLMs, Phone Numbers, Transcribers, Webhooks, Voices, Workflows, and Workflow Leads. Bearer API key
+      authentication.
+    humanURL: https://dialnexa.com/docs/api-reference/introduction
+    baseURL: https://api.dialnexa.com
+    tags:
+      - Voice
+      - AI Agents
+      - Conversational AI
+      - Telephony
+      - Communications
+      - CRM
+      - Sales Automation
+      - Customer Support
+    properties:
+      - type: OpenAPI
+        url: https://dialnexa.com/docs/api-reference/openapi.json
+      - type: Documentation
+        url: https://dialnexa.com/docs/
+      - type: MCPServer
+        url: https://api.dialnexa.com/v1/mcp
+      - type: LLMsTxt
+        url: https://dialnexa.com/llms.txt
+      - type: LLMsTxt
+        url: https://dialnexa.com/docs/llms.txt
+      - type: Documentation
+        url: https://dialnexa.com/docs/mcp-tools/overview.md
+maintainers:
+  - FN: DialNexa
+    url: https://dialnexa.com/
+generated:
+  by: apis.io/add
+  model: claude-opus-4-8
+  confidence: 97
+  at: '2026-08-21T09:06:19.483Z'
