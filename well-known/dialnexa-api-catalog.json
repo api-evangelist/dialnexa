@@ -1,0 +1,55 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://api.dialnexa.com/v1",
+      "service-desc": [
+        {
+          "href": "https://dialnexa.com/docs/api-reference/openapi.json",
+          "type": "application/openapi+json",
+          "title": "DialNexa OpenAPI specification"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://dialnexa.com/docs/api-reference/introduction",
+          "type": "text/html",
+          "title": "DialNexa API reference"
+        },
+        {
+          "href": "https://dialnexa.com/docs/api-reference/authentication.md",
+          "type": "text/markdown",
+          "title": "DialNexa API authentication"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://api.dialnexa.com",
+          "type": "application/json",
+          "title": "DialNexa API root status"
+        }
+      ]
+    },
+    {
+      "anchor": "https://dialnexa.com",
+      "service-doc": [
+        {
+          "href": "https://dialnexa.com/docs/introduction",
+          "type": "text/html",
+          "title": "DialNexa documentation"
+        }
+      ],
+      "describedby": [
+        {
+          "href": "https://dialnexa.com/llms.txt",
+          "type": "text/plain",
+          "title": "DialNexa website LLM index"
+        },
+        {
+          "href": "https://dialnexa.com/docs/llms.txt",
+          "type": "text/plain",
+          "title": "DialNexa docs LLM index"
+        }
+      ]
+    }
+  ]
+}

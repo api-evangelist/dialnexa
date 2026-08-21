@@ -1,0 +1,90 @@
+# DialNexa
+
+> DialNexa builds Voice AI agents for sales calls, lead qualification, follow-ups, meeting booking, collections, and support workflows.
+
+## Core Website Pages
+
+- [DialNexa Voice AI Agents Platform](https://dialnexa.com/): Build Voice AI agents for sales calls, lead qualification, follow-ups, meeting booking, collections, support, and multilingual workflows.
+- [Voice AI Agents Platform](https://dialnexa.com/platform): Build, deploy, monitor, and integrate inbound and outbound Voice AI agents for sales, support, reminders, analytics, and handoffs.
+- [Industries](https://dialnexa.com/industries): Explore Voice AI agents for education, BFSI, SaaS, healthcare, retail, real estate, hospitality, automotive, manufacturing, and more.
+- [Multilingual Voice AI](https://dialnexa.com/languages): Explore multilingual Voice AI for English, Hindi, Hinglish, Marathi, Kannada, Gujarati, Tamil, Telugu, Bengali, accents, and mixed-language calls.
+- [Pricing](https://dialnexa.com/pricing): Compare DialNexa Voice AI pricing, Rs 5/min starter rates, pilot budgets, Growth and Enterprise plans, concurrency, and provider costs.
+- [Integrations](https://dialnexa.com/integrations): Connect Voice AI agents with CRMs, calendars, helpdesks, WhatsApp, productivity apps, APIs, webhooks, and internal business systems.
+- [Workflows](https://dialnexa.com/workflows): Design automated calling workflows with triggers, retries, CRM updates, WhatsApp follow-ups, meeting booking, analytics, and human handoffs.
+- [Case Studies](https://dialnexa.com/case-studies): Read DialNexa case studies on webinar attendance, demo booking, lead reactivation, pre-sales qualification, revenue, and ROAS outcomes.
+- [Voice AI FAQs](https://dialnexa.com/faq): Get answers about Voice AI agents, Hinglish calls, India use cases, BFSI compliance, integrations, deployment, pricing, ROI, and support.
+- [About](https://dialnexa.com/about): Meet DialNexa, the team building reliable Voice AI agents for Indian business calls, sales, support, collections, and follow-up workflows.
+- [Careers](https://dialnexa.com/careers): Join DialNexa to build Voice AI across telephony, infrastructure, product, AI reliability, integrations, customer workflows, and go-to-market.
+- [Multilingual Voice AI That Adapts Mid-Conversation](https://dialnexa.com/languages/multilingual): DialNexa voice agents switch between English, Hindi, Hinglish, and regional languages mid-call while maintaining full conversation context. One agent, any language combination.
+- [English Voice AI for Business Calls](https://dialnexa.com/languages/english): Deploy accent-aware English Voice AI for Indian and global calls across qualification, reminders, support, feedback, and customer follow-up.
+- [Hindi and Hinglish Voice AI for Business Calls](https://dialnexa.com/languages/hinglish): Deploy Hindi and Hinglish Voice AI for lead qualification, payment reminders, support calls, and natural code-switched conversations.
+- [Marathi Voice AI for Business Calls](https://dialnexa.com/languages/marathi): Automate Marathi and Marathi-English calls for collections, lead qualification, customer support, feedback, and follow-up across Maharashtra.
+- [Kannada Voice AI for Business Calls](https://dialnexa.com/languages/kannada): Use Kannada Voice AI for payment reminders, lead qualification, support, feedback, and Kannada-English customer calls across Karnataka.
+- [Gujarati Voice AI for Business Calls](https://dialnexa.com/languages/gujarati): Automate Gujarati and Gujarati-English calls for lead qualification, payment reminders, support, feedback, and customer follow-up across Gujarat.
+- [Tamil Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/tamil): Deploy Tamil Voice AI agents for support, reminders, qualification, feedback, and customer conversations with natural Tamil-English switching.
+- [Malayalam Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/malayalam): Automate Malayalam Voice AI calls for support, reminders, qualification, feedback, and customer conversations with Malayalam-English switching.
+- [Konkani Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/konkani): Use Konkani Voice AI agents for local-language support, reminders, qualification, feedback, and natural Konkani-English customer calls.
+- [Telugu Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/telugu): Deploy Telugu Voice AI agents for qualification, support, reminders, feedback, and customer follow-up with natural Telugu-English switching.
+- [Bengali Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/bengali): Automate Bengali Voice AI calls for support, reminders, qualification, feedback, and customer conversations with Bengali-English switching.
+- [Odia Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/odia): Use Odia Voice AI agents for reminders, qualification, customer support, feedback, and local-language calls with Odia-English switching.
+- [Punjabi Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/punjabi): Deploy Punjabi Voice AI agents for support, reminders, qualification, feedback, and customer conversations with Punjabi-English switching.
+- [Sanskrit Voice AI Agents for Calls, Support & Conversations](https://dialnexa.com/languages/sanskrit): Use Sanskrit Voice AI for education, cultural programs, reminders, support, and structured multilingual calls with Sanskrit-English interactions.
+- [Assamese Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/assamese): Automate Assamese Voice AI calls for support, reminders, qualification, feedback, and customer conversations with Assamese-English switching.
+- [Maithili Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/maithili): Deploy Maithili Voice AI agents for support, reminders, qualification, feedback, and customer conversations with Maithili-English switching.
+- [Santali Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/santali): Use Santali Voice AI agents for local-language support, reminders, qualification, feedback, outreach, and multilingual customer conversations.
+- [Sindhi Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/sindhi): Automate Sindhi Voice AI calls for support, reminders, qualification, feedback, and customer conversations with Sindhi-Hindi-English switching.
+- [Nepali Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/nepali): Deploy Nepali Voice AI agents for support, reminders, qualification, feedback, and customer conversations with Nepali-Hindi-English switching.
+- [Dogri Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/dogri): Use Dogri Voice AI agents for support, reminders, qualification, feedback, and customer conversations with Dogri-Hindi-English switching.
+- [Manipuri Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/manipuri): Automate Manipuri Voice AI calls for support, reminders, qualification, feedback, and customer conversations with multilingual switching.
+- [Bodo Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/bodo): Deploy Bodo Voice AI agents for support, reminders, qualification, feedback, and customer conversations with Bodo-Assamese-Hindi-English switching.
+- [Urdu Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/urdu): Use Urdu Voice AI agents for support, reminders, qualification, feedback, and customer conversations with Urdu-Hindi-English switching.
+- [Kashmiri Voice AI Agents for Calls, Support & Follow-Ups](https://dialnexa.com/languages/kashmiri): Deploy Kashmiri Voice AI agents for support, reminders, qualification, feedback, and customer conversations with Kashmiri-English switching.
+- [Education and Training](https://dialnexa.com/industries/education): Automate education enquiry calls, student qualification, counselling reminders, fee follow-ups, and admissions support with DialNexa Voice AI.
+- [Finance and Banking](https://dialnexa.com/industries/bfsi): Run BFSI Voice AI for loan enquiries, payment reminders, early collections, KYC follow-up, fraud alerts, and compliant customer calls.
+- [Technology and Software](https://dialnexa.com/industries/saas): Book SaaS demos, qualify trials, support onboarding, collect product feedback, and run renewal follow-ups with DialNexa Voice AI agents.
+- [Collections Voice AI](https://dialnexa.com/industries/collections): Automate collections calls for EMI reminders, overdue follow-up, settlement explanation, promise-to-pay capture, retries, and escalations.
+- [Retail and E-Commerce](https://dialnexa.com/industries/retail-e-commerce): Use DialNexa Voice AI for retail and e-commerce cart recovery, COD confirmation, order updates, returns, feedback, and loyalty calls.
+- [Healthcare and Medical](https://dialnexa.com/industries/healthcare): Automate healthcare appointment booking, patient intake, reminders, follow-ups, billing support, and feedback calls with DialNexa Voice AI.
+- [Real Estate](https://dialnexa.com/industries/real-estate): Qualify real estate leads, schedule site visits, follow up on launches, and manage payment or document reminders with DialNexa Voice AI.
+- [Hospitality and Travel](https://dialnexa.com/industries/hospitality-travel): Automate hospitality and travel booking calls, reservation confirmations, cancellations, upsells, guest feedback, and support workflows.
+- [Automotive](https://dialnexa.com/industries/automotive): Use DialNexa Voice AI for automotive lead qualification, test drive booking, service reminders, renewals, offers, and post-visit follow-up.
+- [Professional Services](https://dialnexa.com/industries/professional-services): Handle professional-services intake, consultation booking, client updates, billing reminders, and recurring follow-up with DialNexa Voice AI.
+- [Government and Public](https://dialnexa.com/industries/government-public): Use multilingual Voice AI for public information calls, application follow-ups, alerts, appointment coordination, feedback, and service navigation.
+- [Food and Beverage](https://dialnexa.com/industries/food-beverage): Automate food and beverage order confirmation, reservations, catering enquiries, delivery coordination, feedback, and loyalty calls.
+- [Manufacturing](https://dialnexa.com/industries/manufacturing): Coordinate manufacturing supplier calls, distributor follow-ups, maintenance reminders, dispatch updates, safety notices, and service workflows.
+- [Fitness and Wellness](https://dialnexa.com/industries/fitness-wellness): Use DialNexa Voice AI for fitness membership enquiries, class booking, renewal reminders, payment follow-up, feedback, and reactivation calls.
+- [Legal Services](https://dialnexa.com/industries/legal-services): Automate legal-services client intake, consultation scheduling, document follow-up, fee reminders, case updates, and deadline communication.
+- [Non-Profit](https://dialnexa.com/industries/non-profit): Reach donors, volunteers, beneficiaries, and event participants with multilingual Voice AI calls for fundraising, reminders, and feedback.
+- [Media and Entertainment](https://dialnexa.com/industries/media-entertainment): Use DialNexa Voice AI for media subscription conversion, renewals, win-back campaigns, event ticket outreach, fan calls, and inbound queries.
+- [Growth School Case Study](https://dialnexa.com/case-studies/growth-school): See how DialNexa helped Growth School lift webinar attendance from 9% to 15% and generate Rs 11.4L revenue at 15.34x ROAS.
+- [Crio Case Study](https://dialnexa.com/case-studies/crio): See how DialNexa helped Crio improve outbound demo booking with 84% peak connectivity, qualified conversations, and 30+ bookings in the best batch.
+- [Newton School Case Study](https://dialnexa.com/case-studies/newton-school): See how DialNexa helped Newton School reactivate dormant leads, qualify interest, and hand warm transfers to sales with 0% transfer drop rate.
+- [Skillovilla Case Study](https://dialnexa.com/case-studies/skillovilla): See how DialNexa helped Skillovilla launch automated pre-sales qualification and meeting booking with an overnight Google Calendar integration.
+- [Voice AI Pilot Program | Iteration-Led 30-Day Launch](https://dialnexa.com/pilots): Run a structured DialNexa Voice AI pilot with call credits, daily monitoring, funnel leakage analysis, rapid iteration, and a 30-day impact report.
+- [Privacy Policy](https://dialnexa.com/privacy-policy): Read how DialNexa handles website information, business enquiries, data usage, service providers, retention, security, and privacy contact details.
+- [Terms of Use](https://dialnexa.com/terms): Review DialNexa website terms covering access, acceptable use, product information, third-party links, disclaimers, updates, and contact details.
+
+## Sitemaps
+
+- [Global sitemap index](https://dialnexa.com/sitemap.xml): Lists website, blog, and documentation sitemaps.
+- [Website sitemap](https://dialnexa.com/website-sitemap.xml): Public DialNexa website pages.
+- [Blog posts sitemap](https://dialnexa.com/blogs/post-sitemap.xml): DialNexa blog posts.
+- [Blog pages sitemap](https://dialnexa.com/blogs/page-sitemap.xml): DialNexa blog pages.
+- [Blog categories sitemap](https://dialnexa.com/blogs/category-sitemap.xml): DialNexa blog categories.
+- [Docs sitemap](https://dialnexa.com/docs/sitemap.xml): DialNexa documentation pages.
+
+## LLM Resources
+
+- [DialNexa website LLMs.txt](https://dialnexa.com/llms.txt): This website-level LLM index.
+- [DialNexa blog LLMs.txt](https://dialnexa.com/blogs/llms.txt): Index for blog posts and company updates.
+- [DialNexa docs LLMs.txt](https://dialnexa.com/docs/llms.txt): Documentation index for API and developer reference pages.
+
+## Agent Discovery
+
+- [API catalog](https://dialnexa.com/.well-known/api-catalog): Linkset catalog for DialNexa public API and documentation discovery.
+- [OpenAPI specification](https://dialnexa.com/docs/api-reference/openapi.json): Machine-readable DialNexa API specification.
+- [Auth.md](https://dialnexa.com/auth.md): Agent authentication and API-key provisioning instructions.
+- [OAuth protected resource metadata](https://dialnexa.com/.well-known/oauth-protected-resource): Machine-readable resource authentication metadata.
+- [Agent skills index](https://dialnexa.com/.well-known/agent-skills/index.json): DialNexa agent skill discovery index.
+- [MCP server card](https://dialnexa.com/.well-known/mcp/server-card.json): DialNexa documentation MCP discovery card.
+- [Documentation MCP endpoint](https://dialnexa.com/docs/mcp): Streamable HTTP MCP endpoint for DialNexa documentation retrieval.

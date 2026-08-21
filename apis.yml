@@ -1,0 +1,82 @@
+aid: dialnexa
+name: DialNexa
+description: >-
+  DialNexa is a Voice AI agents platform for sales calls, lead qualification, follow-ups, meeting
+  booking, collections and support workflows, with a strong focus on Indian-market multilingual
+  calling (English, Hindi, Hinglish, Marathi, Kannada, Gujarati, Tamil, Telugu, Bengali and
+  mixed-language calls). The public contract is an OpenAPI 3.0 document of 41 paths and 54
+  operations served from api.dialnexa.com with bearer authentication. DialNexa publishes an
+  RFC 9727 api-catalog as a proper application/linkset+json document, two llms.txt files (a site
+  index and a 90KB documentation index), and an auth.md written explicitly for AI agents and
+  automation systems describing how API keys are provisioned.
+type: Index
+url: https://raw.githubusercontent.com/api-evangelist/dialnexa/refs/heads/main/apis.yml
+created: '2026-08-21'
+modified: '2026-08-21'
+specificationVersion: '0.23'
+tags:
+- Voice AI
+- Agents
+- Conversational AI
+- Telephony
+- Sales
+- Customer Support
+- Multilingual
+tags_raw:
+- voice ai
+- ai agents
+- telephony
+- lead qualification
+- multilingual
+apis:
+- aid: dialnexa:dialnexa-api
+  name: DialNexa API
+  description: >-
+    Voice AI agent platform API — agents, calls, workflows, integrations and analytics.
+    41 paths, 54 operations, bearer authentication, served from api.dialnexa.com.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Voice AI
+  - Agents
+  - Telephony
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+common:
+- type: APICatalog
+  url: well-known/dialnexa-api-catalog.json
+- type: LLMsTxt
+  url: llms/dialnexa-llms.txt
+- type: Website
+  url: https://dialnexa.com
+- type: DeveloperPortal
+  url: https://dialnexa.com/docs
+- type: Plans
+  url: https://dialnexa.com/pricing
+maintainers:
+- FN: DialNexa
+  url: https://dialnexa.com
+x-provenance:
+  added: '2026-08-21'
+  method: searched
+  source: https://dialnexa.com/llms.txt
+  note: >-
+    Submitted via apis.io/add on 2026-08-21 (twice, as "DialNexa" and "DialNexa | Voice AI Agents
+    Platform" — one provider, two records at the gate). The submitted APIs.json URL,
+    https://dialnexa.com/apis.json, returns 404; that is a bad pointer in the submission, not an
+    absent surface.
+    A NOTE ON HOW THIS WAS FOUND, because the first pass got it wrong. Probing guessed paths
+    (/openapi.json, /developers, /api-docs) suggested DialNexa published nothing: /openapi.json
+    404s, and /developers and /api-docs both return HTTP 200 with the same ~14,930-byte SPA shell
+    the site serves for any unknown path, including an invented control. Reading the provider's
+    own llms.txt instead produced the real locations, and they are all live: an
+    application/linkset+json api-catalog, a 352KB OpenAPI under /docs/api-reference/, a 90KB
+    documentation llms.txt, and an auth.md addressed to AI agents. Guessing paths on a soft-200
+    host produces a false negative; the provider's own index is the authority.
