@@ -29,20 +29,208 @@ tags_raw:
 - lead qualification
 - multilingual
 apis:
-- aid: dialnexa:dialnexa-api
-  name: DialNexa API
-  description: >-
-    Voice AI agent platform API — agents, calls, workflows, integrations and analytics.
-    41 paths, 54 operations, bearer authentication, served from api.dialnexa.com.
+- aid: dialnexa:dialnexa-agents-api
+  name: DialNexa Agents API
+  description: The Agents API from DialNexa — 2 operation(s) for agents.
   humanURL: https://dialnexa.com/docs
   baseURL: https://api.dialnexa.com
   tags:
-  - Voice AI
   - Agents
-  - Telephony
   properties:
   - type: OpenAPI
-    url: openapi/dialnexa-api-openapi.yml
+    url: openapi/dialnexa-agents-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-batch-calls-api
+  name: DialNexa Batch Calls API
+  description: The Batch Calls API from DialNexa — 3 operation(s) for batch calls.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Batch Calls
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-batch-calls-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-calls-api
+  name: DialNexa Calls API
+  description: The Calls API from DialNexa — 2 operation(s) for calls.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Calls
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-calls-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-knowledge-base-api
+  name: DialNexa Knowledge Base API
+  description: The Knowledge Base API from DialNexa — 2 operation(s) for knowledge base.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Knowledge Base
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-knowledge-base-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-languages-api
+  name: DialNexa Languages API
+  description: The Languages API from DialNexa — 2 operation(s) for languages.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Languages
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-languages-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-llms-api
+  name: DialNexa LL Ms API
+  description: The LLMs API from DialNexa — 3 operation(s) for llms.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - LLMs
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-llms-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-organization-folders-api
+  name: DialNexa Organization Folders API
+  description: The Organization Folders API from DialNexa — 2 operation(s) for organization folders.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Organization Folders
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-organization-folders-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-phone-numbers-api
+  name: DialNexa Phone Numbers API
+  description: The Phone Numbers API from DialNexa — 8 operation(s) for phone numbers.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Phone Numbers
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-phone-numbers-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-transcribers-api
+  name: DialNexa Transcribers API
+  description: The Transcribers API from DialNexa — 3 operation(s) for transcribers.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Transcribers
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-transcribers-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-voices-api
+  name: DialNexa Voices API
+  description: The Voices API from DialNexa — 5 operation(s) for voices.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Voices
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-voices-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-webhooks-api
+  name: DialNexa Webhooks API
+  description: The Webhooks API from DialNexa — 2 operation(s) for webhooks.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Webhooks
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-webhooks-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-workflow-leads-api
+  name: DialNexa Workflow Leads API
+  description: The Workflow Leads API from DialNexa — 4 operation(s) for workflow leads.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Workflow Leads
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-workflow-leads-api-openapi.yml
+  - type: Documentation
+    url: https://dialnexa.com/docs
+  - type: APIReference
+    url: https://dialnexa.com/docs/api-reference/openapi.json
+  - type: Authentication
+    url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-workflows-api
+  name: DialNexa Workflows API
+  description: The Workflows API from DialNexa — 3 operation(s) for workflows.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Workflows
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-workflows-api-openapi.yml
   - type: Documentation
     url: https://dialnexa.com/docs
   - type: APIReference
