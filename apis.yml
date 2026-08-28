@@ -11,6 +11,18 @@ description: >-
   automation systems describing how API keys are provisioned.
 type: Index
 url: https://raw.githubusercontent.com/api-evangelist/dialnexa/refs/heads/main/apis.yml
+deliveryModel:
+  model: saas
+  open_source: false
+  commercial: true
+  callable_host: true
+  label: Hosted service · you call their endpoint
+  confidence: high
+  source:
+  - openapi
+  - pricing
+  generated: '2026-08-28'
+  method: derived
 created: '2026-08-21'
 modified: '2026-08-21'
 specificationVersion: '0.23'
