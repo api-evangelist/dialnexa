@@ -27,13 +27,11 @@ created: '2026-08-21'
 modified: '2026-08-21'
 specificationVersion: '0.23'
 tags:
-- Voice AI
-- Agents
-- Conversational AI
-- Telephony
-- Sales
-- Customer Support
-- Multilingual
+- voice ai
+- ai agents
+- telephony
+- lead qualification
+- multilingual
 tags_raw:
 - voice ai
 - ai agents
@@ -111,6 +109,8 @@ apis:
   humanURL: https://dialnexa.com/docs
   baseURL: https://api.dialnexa.com
   tags:
+  - Language
+  tags_raw:
   - Languages
   properties:
   - type: OpenAPI
@@ -207,6 +207,8 @@ apis:
   humanURL: https://dialnexa.com/docs
   baseURL: https://api.dialnexa.com
   tags:
+  - Webhook
+  tags_raw:
   - Webhooks
   properties:
   - type: OpenAPI
