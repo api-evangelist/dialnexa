@@ -1,0 +1,671 @@
+openapi: 3.2.0
+info:
+  title: DialNexa Webhooks API
+  description: Public `/v1` REST API for the DialNexa voice AI platform.
+  version: 1.0.0
+servers:
+- url: https://api.dialnexa.com
+  description: DialNexa production API
+security:
+- bearer: []
+tags:
+- name: Webhooks
+paths:
+  /v1/user-webhooks:
+    post:
+      description: Registers a new webhook URL for your organization. The secret is returned only once at creation - store it securely. For v1 call-ended deliveries, DialNexa sends a plain JSON body and an x-nexa-signature header in the format sha256=<hex> computed with HMAC-SHA256 over the raw request body.
+      operationId: createWebhook
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+            examples:
+              request:
+                summary: Create a webhook
+                value:
+                  url: https://example.com/dialnexa/webhook
+                  events:
+                  - call.completed
+                  is_active: true
+                  secret: replace-with-a-long-random-secret
+      responses:
+        '201':
+          description: Webhook created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Webhook created successfully
+                  webhook:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: webhook_abc123
+                      url:
+                        type: string
+                        example: https://webhook.site/your-endpoint
+                      events:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                        - call.completed
+                        - call.failed
+                      is_active:
+                        type: boolean
+                        example: true
+                      secret:
+                        type: string
+                        example: mySuperSecret
+                        description: Shown once at creation only
+                      createdAt:
+                        type: string
+                        format: date-time
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: webhook_abc123
+                    url: https://example.com/dialnexa/webhook
+                    events:
+                    - call.completed
+                    is_active: true
+                    createdAt: '2026-07-03T10:30:00.000Z'
+        '400':
+          description: Bad request - missing required fields or invalid URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: url must be a valid URL
+                    error: Bad Request
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Create Webhook
+      tags:
+      - Webhooks
+    get:
+      description: Returns paginated webhook registrations. Secrets are masked in all list responses.
+      operationId: listWebhooks
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: 'Results per page (default: 10)'
+        schema:
+          example: 10
+          type: number
+      - name: page
+        required: false
+        in: query
+        description: 'Page number (default: 1)'
+        schema:
+          example: 1
+          type: number
+      responses:
+        '200':
+          description: Webhooks returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Webhooks fetched successfully
+                  webhooks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: webhook_abc123
+                        url:
+                          type: string
+                          example: https://webhook.site/your-endpoint
+                        events:
+                          type: array
+                          items:
+                            type: string
+                          example:
+                          - call.completed
+                        is_active:
+                          type: boolean
+                          example: true
+                        secret:
+                          type: string
+                          example: '********'
+                          description: Always masked in list responses
+                        createdAt:
+                          type: string
+                          format: date-time
+                  page:
+                    type: number
+                    example: 1
+                  limit:
+                    type: number
+                    example: 10
+                  total:
+                    type: number
+                    example: 5
+                  totalPages:
+                    type: number
+                    example: 1
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    total: 1
+                    page: 1
+                    limit: 10
+                    webhooks:
+                    - id: webhook_abc123
+                      url: https://example.com/dialnexa/webhook
+                      events:
+                      - call.completed
+                      is_active: true
+                      createdAt: '2026-07-03T10:30:00.000Z'
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: List Webhooks
+      tags:
+      - Webhooks
+  /v1/user-webhooks/{id}:
+    patch:
+      description: Update URL, events, or active status. Partial updates supported.
+      operationId: updateWebhook
+      parameters:
+      - name: id
+        required: true
+        in: path
+        description: Webhook ID
+        schema:
+          example: webhook_abc123
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWebhookRequest'
+            examples:
+              request:
+                summary: Update a webhook
+                value:
+                  is_active: false
+      responses:
+        '200':
+          description: Webhook updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Webhook updated successfully
+                  webhook:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: webhook_abc123
+                      url:
+                        type: string
+                        example: https://webhook.site/new-endpoint
+                      events:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                        - call.completed
+                      is_active:
+                        type: boolean
+                        example: false
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: webhook_abc123
+                    url: https://example.com/dialnexa/webhook
+                    events:
+                    - call.completed
+                    is_active: false
+                    createdAt: '2026-07-03T10:30:00.000Z'
+        '400':
+          description: Bad request - invalid fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: url must be a valid URL
+                    error: Bad Request
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Webhook not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Webhook not found
+                    error: Not Found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Update Webhook
+      tags:
+      - Webhooks
+    delete:
+      description: Deletes a webhook so new events stop being delivered.
+      operationId: deleteWebhook
+      parameters:
+      - name: id
+        required: true
+        in: path
+        description: Webhook ID
+        schema:
+          example: webhook_abc123
+          type: string
+      responses:
+        '200':
+          description: Webhook deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Webhook deleted successfully
+                  id:
+                    type: string
+                    example: webhook_abc123
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    message: Webhook deleted successfully
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Webhook not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Webhook not found
+                    error: Not Found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Delete Webhook
+      tags:
+      - Webhooks
+    get:
+      operationId: getWebhook
+      parameters:
+      - name: id
+        required: true
+        in: path
+        description: Webhook ID
+        schema:
+          example: webhook_abc123
+          type: string
+      responses:
+        '200':
+          description: Webhook returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Webhook fetched successfully
+                  webhook:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: webhook_abc123
+                      url:
+                        type: string
+                        example: https://webhook.site/your-endpoint
+                      events:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                        - call.completed
+                      is_active:
+                        type: boolean
+                        example: true
+                      secret:
+                        type: string
+                        example: '********'
+                      createdAt:
+                        type: string
+                        format: date-time
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: webhook_abc123
+                    url: https://example.com/dialnexa/webhook
+                    events:
+                    - call.completed
+                    is_active: true
+                    createdAt: '2026-07-03T10:30:00.000Z'
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Webhook not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Webhook not found
+                    error: Not Found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Get Webhook Details
+      tags:
+      - Webhooks
+      description: Returns one webhook registration; its signing secret is masked after creation.
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    CreateWebhookRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          example: https://webhook.site/your-endpoint
+          description: The URL to which webhook events will be sent.
+        events:
+          example:
+          - order.paid
+          - order.failed
+          description: List of events this webhook is subscribed to.
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+          example: true
+          description: Whether the webhook is active.
+        secret:
+          type: string
+          example: mySuperSecret
+          description: Secret used to sign webhook payloads.
+      required:
+      - url
+      - events
+      - secret
+    UpdateWebhookRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          example: https://webhook.site/updated-endpoint
+          description: The new URL for the webhook.
+        events:
+          example:
+          - order.paid
+          description: Updated list of events.
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+          example: false
+          description: Whether the webhook is active.
+        secret:
+          type: string
+          example: newSecret
+          description: New secret for signing payloads.
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http

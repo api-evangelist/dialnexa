@@ -1,0 +1,172 @@
+openapi: 3.2.0
+info:
+  title: DialNexa Organization Folders API
+  description: Public `/v1` REST API for the DialNexa voice AI platform.
+  version: 1.0.0
+servers:
+- url: https://api.dialnexa.com
+  description: DialNexa production API
+security:
+- bearer: []
+tags:
+- name: Organization Folders
+paths:
+  /v1/organization-folders:
+    get:
+      operationId: listOrganizationFolders
+      parameters:
+      - name: search
+        required: false
+        in: query
+        description: Case-insensitive folder name search.
+        schema:
+          type: string
+          example: Sales
+      - name: page
+        required: false
+        in: query
+        description: Page number starting from 1.
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        required: false
+        in: query
+        description: Results per page. Maximum 50.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      responses:
+        '200':
+          description: Organization folders returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - folders
+                - page
+                - limit
+                properties:
+                  folders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrganizationFolder'
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 20
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Authenticated organization not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearer: []
+      summary: List Organization Folders
+      tags:
+      - Organization Folders
+      description: Returns active folders for the authenticated organization with optional search and pagination.
+  /v1/organization-folders/{id}:
+    get:
+      operationId: getOrganizationFolder
+      parameters:
+      - name: id
+        required: true
+        in: path
+        description: Organization folder ID.
+        schema:
+          type: string
+          example: fld_abc123xyz789
+      responses:
+        '200':
+          description: Organization folder returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationFolder'
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Folder not found in the authenticated organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearer: []
+      summary: Get Organization Folder
+      tags:
+      - Organization Folders
+      description: Returns one active organization folder by ID.
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    OrganizationFolder:
+      type: object
+      properties:
+        id:
+          type: string
+          example: fld_abc123xyz789
+        organization_id:
+          type: string
+          example: org_abc123xyz789
+        name:
+          type: string
+          maxLength: 35
+          example: Sales Agents
+        is_deleted:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - organization_id
+      - name
+      - is_deleted
+      - created_at
+      - updated_at
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http

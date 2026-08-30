@@ -1,0 +1,917 @@
+openapi: 3.2.0
+info:
+  title: DialNexa Phone Numbers API
+  description: Public `/v1` REST API for the DialNexa voice AI platform.
+  version: 1.0.0
+servers:
+- url: https://api.dialnexa.com
+  description: DialNexa production API
+security:
+- bearer: []
+tags:
+- name: Phone Numbers
+paths:
+  /v1/phone-country-rules/countries:
+    get:
+      operationId: listPhoneCountryRules
+      responses:
+        '200':
+          description: Active phone country rules returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PhoneCountryRule'
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearer: []
+      summary: List Phone Country Rules
+      tags:
+      - Phone Numbers
+      description: Returns the active global country catalog with calling codes, number lengths, and prefixes.
+  /v1/phone-country-rules/enabled-network-groups:
+    get:
+      operationId: listEnabledTelephonyNetworkGroups
+      responses:
+        '200':
+          description: Enabled destination rules returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnabledTelephonyNetworkGroup'
+        '400':
+          description: Workspace context could not be resolved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearer: []
+      summary: List Enabled Telephony Network Groups
+      tags:
+      - Phone Numbers
+      description: Returns one combined destination rule per country enabled for the authenticated workspace.
+  /v1/phone-number-pricing:
+    get:
+      operationId: listPhoneNumberPricing
+      responses:
+        '200':
+          description: Phone number pricing returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PhoneNumberPricing'
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearer: []
+      summary: List Phone Number Pricing
+      tags:
+      - Phone Numbers
+      description: Returns phone number rental pricing by telephony provider and country.
+  /v1/organization-phone-numbers:
+    get:
+      operationId: listPhoneNumbers
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        schema:
+          example: 20
+          type: number
+      - name: page
+        required: false
+        in: query
+        schema:
+          example: 1
+          type: number
+      responses:
+        '200':
+          description: Phone numbers returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: phn_abc123
+                        phone_number:
+                          type: string
+                          example: '+919876543210'
+                        provider:
+                          type: string
+                        status:
+                          type: string
+                  total:
+                    type: number
+                  page:
+                    type: number
+                  limit:
+                    type: number
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    items:
+                    - id: phn_abc123
+                      phone_number: '+14155552671'
+                      provider: plivo
+                      status: active
+                      country_code: US
+                      nickname: US Sales Line
+                    total: 1
+                    page: 1
+                    limit: 20
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: List Phone Numbers
+      tags:
+      - Phone Numbers
+      description: Returns phone numbers owned by the authenticated workspace with pagination metadata.
+  /v1/organization-phone-numbers/plivo-numbers:
+    get:
+      description: Searches available Plivo phone numbers that match the supplied filters.
+      operationId: searchAvailablePhoneNumbers
+      parameters:
+      - name: country_iso
+        required: true
+        in: query
+        description: ISO country code (e.g., US, GB, CA)
+        schema:
+          example: US
+          type: string
+      - name: type
+        required: false
+        in: query
+        description: Type of number (e.g., tollfree, local, mobile)
+        schema:
+          example: tollfree
+          type: string
+      responses:
+        '200':
+          description: Available Plivo numbers returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailablePhoneNumbersResponse'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    api_id: 9f6d7c
+                    objects:
+                    - number: '+14155552671'
+                      type: local
+                      monthly_rental_rate: '0.80'
+                      setup_rate: '0.00'
+                      voice_enabled: true
+                      sms_enabled: true
+                      mms_enabled: false
+                      country_iso: US
+                      number_format: '+14155552671'
+                    meta:
+                      total_count: 1
+        '400':
+          description: country_iso is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: country_iso is required
+                    error: Bad Request
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+      security:
+      - bearer: []
+      summary: Search Plivo Numbers
+      tags:
+      - Phone Numbers
+  /v1/organization-phone-numbers/purchase:
+    post:
+      description: Purchases the selected provider number and adds it to the authenticated workspace for routing.
+      operationId: purchasePhoneNumber
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchasePhoneNumberRequest'
+            examples:
+              request:
+                summary: Purchase a phone number
+                value:
+                  phoneNumber: '+14155552671'
+                  telephonyProviderId: plivo_123456
+                  countryISO: US
+      responses:
+        '200':
+          description: Phone number purchase initiated and record created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasePhoneNumberResponse'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    phoneNumber: '+1234567890'
+                    status: active
+                    message: string
+                    organizationPhoneNumber:
+                      sip_trunk_enabled: false
+        '400':
+          description: Invalid request or failed to purchase
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: country_iso is required
+                    error: Bad Request
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '201':
+          description: Phone number purchased and registered successfully.
+          content:
+            application/json:
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    phoneNumber: '+14155552671'
+                    status: active
+                    message: Phone number purchased and registered successfully
+                    organizationPhoneNumber:
+                      id: phn_abc123
+                      phone_number: '+14155552671'
+                      provider: plivo
+                      status: active
+                      country_code: US
+                      nickname: US Sales Line
+      security:
+      - bearer: []
+      summary: Purchase Phone Number
+      tags:
+      - Phone Numbers
+  /v1/organization-phone-numbers/sip-trunks:
+    post:
+      operationId: linkSipTrunk
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkSipTrunkRequest'
+            examples:
+              request:
+                summary: Link a SIP trunk
+                value:
+                  phoneNumber: '+14155552671'
+                  terminationUri: 31974861099010243.zt.plivo.com:5060
+                  authMode: userpass
+                  sipTrunkUserName: sip-user
+                  sipTrunkPassword: YOUR_SIP_PASSWORD
+                  nickname: US BYOC Line
+      responses:
+        '201':
+          description: SIP trunk linked successfully.
+          content:
+            application/json:
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: phn_abc123
+                    phone_number: '+14155552671'
+                    provider: plivo
+                    status: active
+                    country_code: US
+                    nickname: US BYOC Line
+        '400':
+          description: Invalid number, termination host, authentication mode, or credential combination.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: sipTrunkUserName and sipTrunkPassword are required when authMode=userpass
+                    error: Bad Request
+        '409':
+          description: Phone number already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 409 Conflict
+                  value:
+                    statusCode: 409
+                    message: Phone number already registered
+                    error: Conflict
+        '502':
+          description: SIP trunk registration failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 502 Bad Gateway
+                  value:
+                    statusCode: 502
+                    message: SIP trunk registration failed
+                    error: Bad Gateway
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Link SIP Trunk
+      tags:
+      - Phone Numbers
+      description: Registers a bring-your-own number with SIP trunk credentials for workspace routing.
+  /v1/organization-phone-numbers/{id}:
+    delete:
+      description: Deletes a workspace phone number, releases its provider rental or SIP connection, and prevents future DialNexa routing. The request is blocked if the number is the workspace default or is used by an active workflow.
+      operationId: deletePhoneNumber
+      parameters:
+      - name: id
+        required: true
+        in: path
+        description: Phone number ID
+        schema:
+          example: phn_abc123
+          type: string
+      responses:
+        '200':
+          description: Phone number deleted successfully.
+        '400':
+          description: Invalid phone number ID format.
+        '401':
+          description: Unauthorized - missing or invalid API key.
+        '403':
+          description: Forbidden - phone number does not belong to your organization.
+        '404':
+          description: Phone number not found.
+        '409':
+          description: Conflict - phone number is the organization default or has active workflows.
+        '500':
+          description: Internal server error.
+      security:
+      - bearer: []
+      summary: Delete Phone Number
+      tags:
+      - Phone Numbers
+    get:
+      operationId: getPhoneNumber
+      parameters:
+      - name: id
+        required: true
+        in: path
+        description: Phone number ID
+        schema:
+          example: phn_abc123
+          type: string
+      responses:
+        '200':
+          description: Phone number returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: phn_abc123
+                  phone_number:
+                    type: string
+                    example: '+919876543210'
+                  provider:
+                    type: string
+                  status:
+                    type: string
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: phn_abc123
+                    phone_number: '+14155552671'
+                    provider: plivo
+                    status: active
+                    country_code: US
+                    nickname: US Sales Line
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Phone number not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Phone number not found
+                    error: Not Found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - phone number does not belong to your organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Get Phone Number Details
+      tags:
+      - Phone Numbers
+      description: Returns one workspace phone number and its routing configuration.
+components:
+  schemas:
+    PhoneNumberPricing:
+      type: object
+      properties:
+        telephony_provider_id:
+          type: string
+          example: tp_abc123xyz789
+        country_iso:
+          type: string
+          minLength: 2
+          maxLength: 3
+          example: IN
+        country_name:
+          type: string
+          example: India
+        credit_cost:
+          oneOf:
+          - type: number
+            format: double
+          - type: string
+          example: '500.0000'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        telephonyProvider:
+          type: object
+          additionalProperties: true
+          description: Associated telephony provider metadata.
+      required:
+      - telephony_provider_id
+      - country_iso
+      - country_name
+      - credit_cost
+    LinkSipTrunkRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: '+14155552671'
+          description: E.164 phone number
+        terminationUri:
+          type: string
+          example: 31974861099010243.zt.plivo.com:5060
+          description: 'SIP termination host[:port]; must not use a sip: URI prefix'
+        authMode:
+          type: string
+          enum:
+          - userpass
+          - ip
+          default: userpass
+          description: How the SIP provider authorizes the trunk. userpass requires sipTrunkUserName and sipTrunkPassword. ip requires both credentials to be omitted and the provider to allowlist the DialNexa signaling IP.
+        sipTrunkUserName:
+          type: string
+          description: SIP authentication username. Required for authMode=userpass and forbidden for authMode=ip.
+        sipTrunkPassword:
+          type: string
+          description: SIP authentication password stored encrypted. Required for authMode=userpass and forbidden for authMode=ip.
+        nickname:
+          type: string
+          description: Display nickname for this trunk
+      required:
+      - phoneNumber
+      - terminationUri
+    AvailablePhoneNumbersResponse:
+      type: object
+      properties:
+        api_id:
+          type: string
+          description: API ID for the request
+        objects:
+          description: List of available phone numbers
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailablePhoneNumber'
+        meta:
+          type: object
+          description: Total count of available numbers
+      required:
+      - api_id
+      - objects
+      - meta
+    PurchasePhoneNumberResponse:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: '+1234567890'
+          description: Phone number
+        status:
+          type: string
+          enum:
+          - active
+          - pending
+          description: Status of the phone number
+        message:
+          type: string
+          description: Status message
+        organizationPhoneNumber:
+          description: Organization phone number record
+          allOf:
+          - $ref: '#/components/schemas/OrganizationPhoneNumber'
+      required:
+      - phoneNumber
+      - status
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    OrganizationPhoneNumber:
+      type: object
+      properties:
+        sip_trunk_enabled:
+          type: boolean
+          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
+          default: false
+      required:
+      - sip_trunk_enabled
+    PhoneCountryRule:
+      type: object
+      properties:
+        id:
+          type: string
+          example: pcr_abc123xyz789
+        country_iso:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: IN
+        country_name:
+          type: string
+          example: India
+        calling_code:
+          type: string
+          example: '91'
+        max_length:
+          type:
+          - integer
+          - 'null'
+          example: 10
+        prefixes:
+          type: array
+          items:
+            type: string
+          example:
+          - '98'
+          - '99'
+        is_deleted:
+          type: boolean
+          example: false
+      required:
+      - id
+      - country_iso
+      - country_name
+      - calling_code
+      - prefixes
+      - is_deleted
+    AvailablePhoneNumber:
+      type: object
+      properties:
+        number:
+          type: string
+          description: The phone number
+        type:
+          type: string
+          description: The type of phone number (local, tollfree, etc.)
+        monthly_rental_rate:
+          type: string
+          description: The monthly rental rate for the phone number
+        setup_rate:
+          type: string
+          description: The setup fee for the phone number
+        voice_enabled:
+          type: boolean
+          description: Voice capability of the phone number
+        sms_enabled:
+          type: boolean
+          description: SMS capability of the phone number
+        mms_enabled:
+          type: boolean
+          description: MMS capability of the phone number
+        country_iso:
+          type: string
+          description: Country ISO code
+        number_format:
+          type: string
+          description: The number in international format
+      required:
+      - number
+      - type
+      - monthly_rental_rate
+      - setup_rate
+      - voice_enabled
+      - sms_enabled
+      - mms_enabled
+      - country_iso
+      - number_format
+    EnabledTelephonyNetworkGroup:
+      type: object
+      properties:
+        prefix_mode:
+          type: string
+          enum:
+          - allow_only_listed
+        from_phone_number_country_code:
+          type:
+          - string
+          - 'null'
+          example: null
+        countryRule:
+          type: object
+          properties:
+            country_iso:
+              type: string
+              example: IN
+            country_name:
+              type: string
+              example: India Mobile
+            calling_code:
+              type: string
+              example: '91'
+            prefixes:
+              type: array
+              items:
+                type: string
+              example:
+              - '98'
+              - '99'
+          required:
+          - country_iso
+          - country_name
+          - calling_code
+          - prefixes
+      required:
+      - prefix_mode
+      - from_phone_number_country_code
+      - countryRule
+    PurchasePhoneNumberRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: '+1234567890'
+          description: Phone number to purchase
+        telephonyProviderId:
+          type: string
+          example: plivo_123456
+          description: ID of telephony provider (14-char string)
+        countryISO:
+          type: string
+          example: US
+          description: Country ISO code (e.g., US, IN)
+      required:
+      - phoneNumber
+      - telephonyProviderId
+      - countryISO
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http

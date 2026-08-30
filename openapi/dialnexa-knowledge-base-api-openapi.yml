@@ -1,0 +1,431 @@
+openapi: 3.2.0
+info:
+  title: DialNexa Knowledge Base API
+  description: Public `/v1` REST API for the DialNexa voice AI platform.
+  version: 1.0.0
+servers:
+- url: https://api.dialnexa.com
+  description: DialNexa production API
+security:
+- bearer: []
+tags:
+- name: Knowledge Base
+paths:
+  /v1/knowledge-base:
+    post:
+      operationId: createKnowledgeBase
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKnowledgeBaseRequest'
+            examples:
+              request:
+                summary: Request example
+                value:
+                  name: Product Documentation
+      responses:
+        '201':
+          description: Knowledge base created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeBase'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: kb_abc123
+                    name: Loan FAQ
+                    description: Frequently asked questions for loan calls
+                    file_name: loan-faq.pdf
+                    status: ready
+                    createdAt: '2026-07-03T10:30:00.000Z'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '409':
+          description: Knowledge base name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 409 Conflict
+                  value:
+                    statusCode: 409
+                    message: Knowledge base with this name already exists
+                    error: Conflict
+      security:
+      - bearer: []
+      summary: Create Knowledge Base
+      tags:
+      - Knowledge Base
+      description: Creates an empty knowledge base that can be populated and attached to agent versions.
+    get:
+      operationId: listKnowledgeBases
+      parameters:
+      - name: page
+        required: false
+        in: query
+        schema:
+          example: 1
+          type: number
+      - name: limit
+        required: false
+        in: query
+        schema:
+          example: 20
+          type: number
+      - name: sortBy
+        required: false
+        in: query
+        schema:
+          example: id
+          type: string
+      - name: sortOrder
+        required: false
+        in: query
+        schema:
+          enum:
+          - ASC
+          - DESC
+          type: string
+      responses:
+        '200':
+          description: Knowledge bases returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                - meta
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KnowledgeBase'
+                  meta:
+                    type: object
+                    required:
+                    - totalItems
+                    - itemsPerPage
+                    - totalPages
+                    - currentPage
+                    properties:
+                      totalItems:
+                        type: integer
+                        example: 1
+                      itemsPerPage:
+                        type: integer
+                        example: 20
+                      totalPages:
+                        type: integer
+                        example: 1
+                      currentPage:
+                        type: integer
+                        example: 1
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    items:
+                    - id: kb_abc123
+                      name: Loan FAQ
+                    meta:
+                      totalItems: 1
+                      itemsPerPage: 20
+                      totalPages: 1
+                      currentPage: 1
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+      security:
+      - bearer: []
+      summary: List Knowledge Bases
+      tags:
+      - Knowledge Base
+      description: Returns knowledge bases for the authenticated workspace in an items and meta pagination envelope.
+  /v1/knowledge-base/{id}:
+    patch:
+      operationId: updateKnowledgeBase
+      parameters:
+      - name: id
+        required: true
+        in: path
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateKnowledgeBaseRequest'
+            examples:
+              request:
+                summary: Update a knowledge base
+                value:
+                  name: Updated Loan FAQ
+      responses:
+        '200':
+          description: Knowledge base updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeBase'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: kb_abc123
+                    name: Updated Loan FAQ
+                    description: Frequently asked questions for loan calls
+                    file_name: loan-faq.pdf
+                    status: ready
+                    createdAt: '2026-07-03T10:30:00.000Z'
+        '409':
+          description: New name already in use in this workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 409 Conflict
+                  value:
+                    statusCode: 409
+                    message: Knowledge base with this name already exists
+                    error: Conflict
+      security:
+      - bearer: []
+      summary: Update Knowledge Base
+      tags:
+      - Knowledge Base
+      description: Renames one knowledge base without changing its ID or agent attachments.
+    delete:
+      operationId: deleteKnowledgeBase
+      parameters:
+      - name: id
+        required: true
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Knowledge base deleted successfully.
+          content:
+            application/json:
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    message: Knowledge base deleted successfully
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Knowledge base deleted successfully
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '403':
+          description: Forbidden - knowledge base does not belong to your organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+        '404':
+          description: Knowledge base not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Knowledge base not found
+                    error: Not Found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '409':
+          description: Knowledge base is still used by one or more agents.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ErrorResponse'
+                properties:
+                  agent_ids:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - agent_2g7Xy3tY53gRlp
+              examples:
+                knowledgeBaseInUse:
+                  summary: 409 Conflict
+                  value:
+                    statusCode: 409
+                    message: 'This knowledge base cannot be deleted because it is being used by 1 agent(s): agent_2g7Xy3tY53gRlp. Please unlink it from these agents before deleting.'
+                    agent_ids:
+                    - agent_2g7Xy3tY53gRlp
+                    error: Conflict
+      security:
+      - bearer: []
+      summary: Delete Knowledge Base
+      tags:
+      - Knowledge Base
+      description: Deletes a knowledge base. The request is blocked while an agent still uses it.
+    get:
+      operationId: getKnowledgeBase
+      parameters:
+      - name: id
+        required: true
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Knowledge base returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeBase'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: kb_abc123
+                    name: Loan FAQ
+                    description: Frequently asked questions for loan calls
+                    file_name: loan-faq.pdf
+                    status: ready
+                    createdAt: '2026-07-03T10:30:00.000Z'
+      security:
+      - bearer: []
+      summary: Get Knowledge Base Details
+      tags:
+      - Knowledge Base
+      description: Returns one knowledge base owned by the authenticated workspace.
+components:
+  schemas:
+    KnowledgeBase:
+      type: object
+      properties:
+        id:
+          type: string
+          example: kb_abc123
+          description: Signed knowledge base ID.
+        name:
+          type: string
+          example: Loan FAQ
+          maxLength: 150
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - name
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    CreateKnowledgeBaseRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the knowledge base (must be unique within the workspace)
+          example: Product Documentation
+          maxLength: 150
+      required:
+      - name
+    UpdateKnowledgeBaseRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the knowledge base
+          example: Updated Product Documentation
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http

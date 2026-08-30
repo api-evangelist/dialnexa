@@ -1,0 +1,581 @@
+openapi: 3.2.0
+info:
+  title: DialNexa Calls API
+  description: Public `/v1` REST API for the DialNexa voice AI platform.
+  version: 1.0.0
+servers:
+- url: https://api.dialnexa.com
+  description: DialNexa production API
+security:
+- bearer: []
+tags:
+- name: Calls
+paths:
+  /v1/calls:
+    post:
+      description: Schedules a single outbound call. The call is queued and initiated when resources are available.
+      operationId: createCall
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCallRequest'
+            examples:
+              request:
+                summary: Create an outbound call
+                value:
+                  agent_id: agent_2g7Xy3tY53gRlp
+                  phone_number: '+919876543210'
+                  agent_version_number: 1
+                  metadata: {}
+      responses:
+        '201':
+          description: Call created and queued successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCallResponse'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: call_abc123
+                    to_phone_number: '+919876543210'
+                    agent_id: agent_2g7Xy3tY53gRlp
+                    agent_version_number: 1
+        '400':
+          description: Invalid request body - missing required fields or validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: phone_number must be a valid E.164 phone number
+                    error: Bad Request
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '402':
+          description: Payment required - insufficient billing wallet balance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 402 Payment Required
+                  value:
+                    statusCode: 402
+                    message: Insufficient billing wallet balance
+                    error: Payment Required
+        '403':
+          description: Forbidden - KYC not verified or API key does not have access.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: Destination country or network prefix is not enabled for this workspace
+                    error: Forbidden
+        '404':
+          description: Agent or phone number not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Agent or phone number not found
+                    error: Not Found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+      security:
+      - bearer: []
+      summary: Create Call
+      tags:
+      - Calls
+    get:
+      operationId: listCalls
+      parameters:
+      - name: agent_id
+        required: false
+        in: query
+        description: Filter by agent ID(s) - can be a single ID or comma-separated list (e.g., 1,2,3)
+        schema:
+          type: string
+      - name: call_id
+        required: false
+        in: query
+        description: Filter by call ID - can be a single ID or comma-separated list (e.g., call_abc,call_def)
+        schema:
+          type: string
+      - name: batch_call_id
+        required: false
+        in: query
+        description: Filter by batch call ID - can be a single ID or comma-separated list (e.g., batch_abc,batch_def)
+        schema:
+          type: string
+      - name: from
+        required: false
+        in: query
+        description: Filter by sender phone number
+        schema:
+          type: string
+      - name: to
+        required: false
+        in: query
+        description: Filter by recipient phone number
+        schema:
+          type: string
+      - name: type
+        required: false
+        in: query
+        description: Filter by call type(s) - can be a single value or comma-separated list
+        schema:
+          type: string
+          enum:
+          - phone
+          - web
+      - name: call_direction
+        required: false
+        in: query
+        description: Filter by call direction(s) - can be a single value or comma-separated list
+        schema:
+          type: string
+          enum:
+          - inbound
+          - outbound
+      - name: latency_min
+        required: false
+        in: query
+        description: Filter by minimum latency (in milliseconds)
+        schema:
+          type: number
+      - name: latency_max
+        required: false
+        in: query
+        description: Filter by maximum latency (in milliseconds)
+        schema:
+          type: number
+      - name: agent_version_id
+        required: false
+        in: query
+        description: Filter by agent version ID(s) - can be a single ID or comma-separated list (e.g., 1,2,3)
+        schema:
+          type: string
+      - name: agent_version_name
+        required: false
+        in: query
+        description: Search by agent version name (partial match, case-insensitive)
+        schema:
+          type: string
+      - name: sentiment
+        required: false
+        in: query
+        description: Filter by sentiment(s) - can be a single value or comma-separated list
+        schema:
+          type: string
+          enum:
+          - positive
+          - neutral
+          - negative
+          - unknown
+      - name: start_date
+        required: false
+        in: query
+        description: Filter by start date (ISO format)
+        schema:
+          type: string
+      - name: end_date
+        required: false
+        in: query
+        description: Filter by end date (ISO format)
+        schema:
+          type: string
+      - name: duration_greater_than
+        required: false
+        in: query
+        description: Filter by minimum call duration (in milliseconds)
+        schema:
+          type: number
+      - name: duration_less_than
+        required: false
+        in: query
+        description: Filter by maximum call duration (in milliseconds)
+        schema:
+          type: number
+      - name: duration_min
+        required: false
+        in: query
+        description: Filter by minimum duration range (in milliseconds)
+        schema:
+          type: number
+      - name: duration_max
+        required: false
+        in: query
+        description: Filter by maximum duration range (in milliseconds)
+        schema:
+          type: number
+      - name: page
+        required: false
+        in: query
+        description: Page number (starts from 1)
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: 'Number of records per page (min: 1, default: 20, max: 200)'
+        schema:
+          type: string
+      - name: created_at
+        required: false
+        in: query
+        description: Sort by created_at (asc or desc)
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+      - name: duration
+        required: false
+        in: query
+        description: Sort by duration (asc or desc)
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+      - name: status
+        required: false
+        in: query
+        description: Filter by call status(es) - can be a single status or comma-separated list
+        schema:
+          type: string
+      - name: export
+        required: false
+        in: query
+        description: Set to true to export all data without pagination
+        schema:
+          type: boolean
+      - name: end_reason
+        required: false
+        in: query
+        description: Filter by end/hangup reason - exact match; comma-separate multiple values for OR filtering
+        schema:
+          type: string
+      - name: columns
+        required: false
+        in: query
+        description: 'Export only: comma-separated column keys. Omitting both transcript and summary raises the single-export limit from 5000 to 10000 rows. Omit this parameter to include all columns.'
+        schema:
+          type: string
+          example: duration,status,agent_name
+      responses:
+        '200':
+          description: Calls returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CallLogs'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                  - id: call_abc123
+                    agent_id: agent_2g7Xy3tY53gRlp
+                    to_number: '+919876543210'
+                    from_number: '+14155552671'
+                    status: initiated
+                    call_direction: outbound
+                    createdAt: '2026-07-03T10:30:00.000Z'
+                    duration: 42
+                    end_reason: completed
+        '400':
+          description: Bad request - invalid query parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: Invalid query parameters
+                    error: Bad Request
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: Destination country or network prefix is not enabled for this workspace
+                    error: Forbidden
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+      security:
+      - bearer: []
+      summary: List Calls
+      tags:
+      - Calls
+      description: Returns calls for the authenticated workspace using the supplied filters, newest records first.
+  /v1/calls/{id}:
+    get:
+      operationId: getCall
+      parameters:
+      - name: id
+        required: true
+        in: path
+        description: Call ID
+        schema:
+          example: call_abc123
+          type: string
+      responses:
+        '200':
+          description: Call returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallLogs'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: call_abc123
+                    agent_id: agent_2g7Xy3tY53gRlp
+                    to_number: '+919876543210'
+                    from_number: '+14155552671'
+                    status: initiated
+                    call_direction: outbound
+                    createdAt: '2026-07-03T10:30:00.000Z'
+                    duration: 42
+                    transcript: 'Agent: Hello Priya. User: I am interested in the loan offer.'
+                    summary: Customer asked for details about the loan offer.
+        '400':
+          description: Invalid call ID format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: Invalid call ID format
+                    error: Bad Request
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '403':
+          description: Forbidden - call does not belong to your organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this call
+                    error: Forbidden
+        '404':
+          description: Call not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Call not found
+                    error: Not Found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+      security:
+      - bearer: []
+      summary: Get Call Details
+      tags:
+      - Calls
+      description: Returns the current call record, including routing, status, transcript, and analysis fields when available.
+components:
+  schemas:
+    CallLogs:
+      type: object
+      properties:
+        id:
+          type: string
+          example: call_abc123
+          description: Signed call ID
+      required:
+      - id
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    CreateCallResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: call_mfgsn90vwcozgb
+          description: Unique call ID for tracking. Use this ID to reference the call in other API endpoints.
+        to_phone_number:
+          type: string
+          example: '+911234567890'
+          description: The phone number that will receive the call.
+        agent_id:
+          type: string
+          example: agent_mfgsn90vwcozgb
+          description: The ID of the agent used for this call.
+        agent_version_number:
+          type: number
+          example: 2
+          description: The version number of the agent used for this call.
+      required:
+      - id
+      - to_phone_number
+      - agent_id
+    CreateCallRequest:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          example: '+911234567890'
+          description: 'Phone number to call (must include country code). Format: +[country code][phone number]'
+        agent_id:
+          type: string
+          example: mgao6051Rk718Y
+          description: Agent ID to use for the call. Must belong to the authenticated organization.
+        agent_version_number:
+          type: number
+          example: 2
+          description: Specific agent version number to use (optional). If provided, must be a published version. If not provided, will use the latest published version.
+        metadata:
+          type: object
+          example:
+            customer_name: John Doe
+            customer_email: john@example.com
+            priority: high
+          description: Metadata for the call including customer information and any additional context. This data will be available during the call for personalization.
+        notes:
+          type: object
+          example:
+            customer_name: John Doe
+            follow_up_required: true
+            source: crm
+          description: Optional notes stored on the call log. Must be a JSON object with at most 15 top-level keys.
+      required:
+      - phone_number
+      - agent_id
+      - metadata
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http

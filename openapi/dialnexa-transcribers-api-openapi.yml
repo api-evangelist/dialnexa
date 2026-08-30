@@ -1,0 +1,261 @@
+openapi: 3.2.0
+info:
+  title: DialNexa Transcribers API
+  description: Public `/v1` REST API for the DialNexa voice AI platform.
+  version: 1.0.0
+servers:
+- url: https://api.dialnexa.com
+  description: DialNexa production API
+security:
+- bearer: []
+tags:
+- name: Transcribers
+paths:
+  /v1/transcribers:
+    get:
+      operationId: listTranscribers
+      parameters: []
+      responses:
+        '200':
+          description: Transcribers returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transcriber'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                  - id: trs_deepgram_nova_2
+                    name: Deepgram Nova 2
+                    provider: deepgram
+                    supports_fallback: true
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: List Transcribers
+      tags:
+      - Transcribers
+      description: Returns the complete catalog of speech-to-text transcribers available for agents.
+  /v1/transcribers/fallback:
+    get:
+      description: Returns all transcribers eligible for use as a fallback STT provider. Use this list to populate the Fallback STT selector when configuring per-agent STT fallback settings.
+      operationId: listFallbackTranscribers
+      parameters: []
+      responses:
+        '200':
+          description: Fallback-eligible transcribers returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: trs_tr0deepnova3xx
+                    name:
+                      type: string
+                      example: Deepgram Nova 2
+                    provider:
+                      type: string
+                      example: deepgram
+                    model_id:
+                      type: string
+                      example: nova-2
+                    description:
+                      type:
+                      - string
+                      - 'null'
+                    supported_language_codes:
+                      type:
+                      - array
+                      - 'null'
+                      items:
+                        type: string
+                      example: null
+                      description: null means all languages supported
+        '401':
+          description: Unauthorized - missing or invalid API key.
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+        '500':
+          description: Internal server error.
+      security:
+      - bearer: []
+      summary: List Fallback Transcribers
+      tags:
+      - Transcribers
+  /v1/transcribers/{id}:
+    get:
+      operationId: getTranscriber
+      parameters:
+      - name: id
+        required: true
+        in: path
+        description: Transcriber ID
+        schema:
+          example: trs_abc123
+          type: string
+      responses:
+        '200':
+          description: Transcriber returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transcriber'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: trs_deepgram_nova_2
+                    name: Deepgram Nova 2
+                    provider: deepgram
+                    supports_fallback: true
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Transcriber not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Transcriber not found
+                    error: Not Found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+        '400':
+          description: Invalid catalog ID format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: Invalid catalog ID format
+                    error: Bad Request
+      security:
+      - bearer: []
+      summary: Get Transcriber Details
+      tags:
+      - Transcribers
+      description: Returns one speech-to-text transcriber catalog record by ID.
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    Transcriber:
+      type: object
+      properties:
+        id:
+          type: string
+          example: trs_abc123
+          description: Signed transcriber ID
+      required:
+      - id
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http
