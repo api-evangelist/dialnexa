@@ -27,11 +27,11 @@ created: '2026-08-21'
 modified: '2026-08-21'
 specificationVersion: '0.23'
 tags:
-- voice ai
-- ai agents
-- telephony
-- lead qualification
-- multilingual
+- Voice AI
+- AI Agents
+- Telephony
+- Lead Qualification
+- Multilingual
 tags_raw:
 - voice ai
 - ai agents
