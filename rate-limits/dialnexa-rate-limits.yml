@@ -1,0 +1,21 @@
+generated: '2026-09-03'
+method: probed
+source: https://api.dialnexa.com/v1/mcp (response headers, 2026-09-03) + https://dialnexa.com/docs/api-reference/reliability.md
+description: >-
+  DialNexa publishes NO numeric rate limits in its docs - the reliability page says explicitly not
+  to hard-code a global requests-per-minute value. The runtime signal is real, though: an
+  unauthenticated request to api.dialnexa.com returned live IETF-style draft headers.
+limit_count: 1
+limits:
+- scope: per-client (observed at the gateway, api.dialnexa.com)
+  limit: 150
+  window: 60s
+  burst: null
+  method: probed
+  evidence: 'x-ratelimit-limit: 150 / x-ratelimit-remaining: 149 / x-ratelimit-reset: 60 on an anonymous POST to /v1/mcp (HTTP 401), 2026-09-03'
+  note: Observed on an unauthenticated response; authenticated/per-plan limits may differ and are not published.
+response_headers: [x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset]
+exhaustion:
+  status: 429
+  retry_after: sent on some 429s; docs say honor it only when present
+docs: https://dialnexa.com/docs/api-reference/reliability

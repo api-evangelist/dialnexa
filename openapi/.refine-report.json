@@ -1,0 +1,32 @@
+{
+  "provider": "dialnexa",
+  "sources": [
+    "dialnexa-api-openapi.yml"
+  ],
+  "outputs": [
+    "dialnexa-agents-api-openapi.yml",
+    "dialnexa-batch-calls-api-openapi.yml",
+    "dialnexa-calls-api-openapi.yml",
+    "dialnexa-knowledge-base-api-openapi.yml",
+    "dialnexa-llms-api-openapi.yml",
+    "dialnexa-languages-api-openapi.yml",
+    "dialnexa-organization-folders-api-openapi.yml",
+    "dialnexa-phone-numbers-api-openapi.yml",
+    "dialnexa-transcribers-api-openapi.yml",
+    "dialnexa-voices-api-openapi.yml",
+    "dialnexa-webhooks-api-openapi.yml",
+    "dialnexa-workflow-leads-api-openapi.yml",
+    "dialnexa-workflows-api-openapi.yml"
+  ],
+  "archived": [
+    "archived openapi/dialnexa-api-openapi.yml"
+  ],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "dialnexa-api-openapi.yml: upgraded openapi 3.0.0 -> OpenAPI 3.2.0",
+    "dialnexa-api-openapi.yml: declared missing tag: Organization Folders",
+    "apis.yml register: written (+13 apis, 13 total)"
+  ],
+  "skipped": []
+}

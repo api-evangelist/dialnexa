@@ -1,0 +1,39 @@
+generated: '2026-09-03'
+method: searched
+source: https://dialnexa.com/pricing
+plan_count: 3
+currency: INR
+plans:
+- name: Pay As You Go
+  price: 5
+  currency: INR
+  unit: per-minute
+  billing: usage-based, no minimum commitment
+  concurrency: 2 (expandable to 20 based on availability)
+  support: email and WhatsApp
+  coverage: India, US, and 200+ countries
+  notes: full API and workflow access
+- name: Growth
+  price: 4.2
+  currency: INR
+  unit: per-minute
+  billing: monthly commitment, 6-month minimum
+  commitment: ~Rs 100,000/month (~24,000 billed minutes/month)
+  concurrency: 10 (expandable to 40)
+  billing_pulse: 30-second intervals
+  notes: expanded concurrency and country coverage, faster support
+- name: Enterprise
+  price: 2.5-3.5
+  currency: INR
+  unit: per-minute (volume-based)
+  billing: custom
+  concurrency: custom per deployment
+  notes: BYOC support, dedicated onboarding, SLA options, custom geography
+pilot:
+  budget: Rs 100,000 - 250,000
+  service_fee: Rs 20,000 one-time setup, waived above Rs 100,000
+  validity: 1 calendar month from kickoff
+  conversion: remainder converts at Rs 5/min
+notes: >-
+  Speech-to-text, language model, voice synthesis, and telephony provider costs are billed
+  separately from the core per-minute plan rates.

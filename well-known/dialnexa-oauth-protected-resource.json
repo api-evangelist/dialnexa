@@ -1,0 +1,18 @@
+{
+  "resource": "https://api.dialnexa.com/v1",
+  "authorization_servers": [
+    "https://dialnexa.com"
+  ],
+  "scopes_supported": [],
+  "bearer_methods_supported": [
+    "header"
+  ],
+  "resource_documentation": "https://dialnexa.com/docs/api-reference/authentication.md",
+  "credential_provisioning": {
+    "type": "api_key",
+    "register_uri": "https://app.dialnexa.com/dashboard/workspace",
+    "documentation_uri": "https://dialnexa.com/docs/api-reference/authentication.md",
+    "instructions": "Sign in, then open Dashboard -> Workspace settings -> Developer -> Add key.",
+    "authorization_header": "Authorization: Bearer YOUR_API_KEY"
+  }
+}

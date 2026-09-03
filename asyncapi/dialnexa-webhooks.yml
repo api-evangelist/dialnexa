@@ -1,0 +1,41 @@
+generated: '2026-09-03'
+method: searched
+source: https://dialnexa.com/docs/api-reference/webhooks/index.md
+name: DialNexa Webhooks
+description: >-
+  DialNexa delivers call lifecycle events to registered HTTPS endpoints by POST. No AsyncAPI
+  document is published; this catalog is captured from the provider's webhook reference. Endpoints
+  are registered in the dashboard (or via the /v1/user-webhooks REST surface) and must answer the
+  synchronous verification request with a 2xx before any events are delivered.
+delivery:
+  transport: https POST
+  user_agent: DialNexa-External-Webhook/1.0 (verification requests use DialNexa-External-Webhook-Verification/1.0)
+  signature:
+    header: x-dialnexa-signature
+    algorithm: HMAC-SHA256 hex digest over the entire raw request body, keyed by the webhook secret
+    note: >-
+      The authentication page also shows x-nexa-signature as the header name in its verification
+      example — an inconsistency in the provider's own docs; the webhook reference (the dedicated
+      page) says x-dialnexa-signature.
+  retries: configurable per webhook, retry count 0-3, timeout 1000-60000 ms; verification requests are never retried
+  secret_rotation: rotating the org webhook secret takes effect immediately for ALL webhooks
+envelope:
+  event_type: event name used for routing
+  payload: event-specific object; call events carry payload.call
+events:
+- name: verification
+  description: Sent synchronously when a webhook URL is registered or changed; flat payload with message + timestamp, no call object. Endpoint must return 2xx or the webhook is not saved.
+- name: call_initiated
+  description: Sent when a call starts; payload.call carries id, direction, type, category, from_number, to_number, status, agent_id, initiated_at.
+- name: call_ended
+  description: >-
+    Sent when a call ends. status "completed" carries duration, transcript, summary, recording_url
+    (pre-signed, expires after 7 days), post_call_analysis, and hangup_reason meaning who hung up
+    first. status "hangup" means the call never connected; hangup_reason says why
+    (user_did_not_pick_up, user_busy, voicemail_detected, user_unreachable,
+    unallocated_phone_number, network_failure, sip_auth_failed, sip_trunk_unreachable, unknown) and
+    is mirrored in the deprecated disconnection_reason alias. Transferred completed calls add a
+    call_transfer object.
+- name: transfer_completed
+  description: Emitted when a conversational agent Transfer node handoff is processed; carries call and call_transfer objects with destination, status, destination_id.
+event_count: 4

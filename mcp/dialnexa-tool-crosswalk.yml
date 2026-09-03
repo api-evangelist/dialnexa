@@ -1,0 +1,131 @@
+generated: '2026-09-03'
+method: derived
+source: mcp/dialnexa-mcp.yml + openapi/_original/dialnexa-openapi.json
+description: >-
+  Binding of each documented DialNexa MCP tool to the backing public REST /v1 operation. The live
+  MCP inputSchemas are auth-gated (tools/list returns 401 anonymously), so bindings are by name and
+  documented semantics against the published 54-operation OpenAPI; confidence reflects that. Tools
+  bound with confidence high share the operation's resource, verb, and documented behavior; the
+  tool inherits that operation's parameters and requestBody as its effective input schema.
+surfaces:
+  openapi: openapi/_original/dialnexa-openapi.json
+  mcp:
+    url: https://api.dialnexa.com/v1/mcp
+    gated: true
+  graphql: null
+crosswalk:
+- {tool: list_agents, category: agents, rest: [listAgents], binding: name+semantics, confidence: high}
+- {tool: get_agent, category: agents, rest: [getAgent], binding: name+semantics, confidence: high}
+- {tool: create_agent, category: agents, rest: [createAgent], binding: name+semantics, confidence: high}
+- {tool: update_agent, category: agents, rest: [updateAgent], binding: name+semantics, confidence: high}
+- {tool: delete_agent, category: agents, rest: [deleteAgent], binding: name+semantics, confidence: high}
+- {tool: list_calls, category: calls, rest: [listCalls], binding: name+semantics, confidence: high}
+- {tool: get_call, category: calls, rest: [getCall], binding: name+semantics, confidence: high}
+- {tool: get_call_details, category: calls, rest: [getCall], binding: semantics, confidence: medium, note: docs distinguish a richer detail view; public REST exposes one getCall operation}
+- {tool: create_call, category: calls, rest: [createCall], binding: name+semantics, confidence: high, note: billable; MCP layer requires explicit user confirmation}
+- {tool: list_batch_calls, category: batch-calls, rest: [listBatchCalls], binding: name+semantics, confidence: high}
+- {tool: create_batch_call, category: batch-calls, rest: [createBatchCall], binding: name+semantics, confidence: high, note: billable; confirmation required}
+- {tool: update_batch_call_status, category: batch-calls, rest: [updateBatchCallStatus], binding: name+semantics, confidence: high}
+- {tool: get_campaign, category: batch-calls, rest: [getBatchCall], binding: semantics, confidence: medium, note: campaigns are the dashboard name for batch call jobs}
+- {tool: get_campaign_status, category: batch-calls, rest: [getBatchCall], binding: semantics, confidence: medium}
+- {tool: list_campaigns, category: batch-calls, rest: [listBatchCalls], binding: semantics, confidence: medium}
+- {tool: list_knowledge_base_documents, category: knowledge-base, rest: [listKnowledgeBases], binding: name+semantics, confidence: medium}
+- {tool: get_knowledge_base_document, category: knowledge-base, rest: [getKnowledgeBase], binding: name+semantics, confidence: medium}
+- {tool: create_knowledge_base, category: knowledge-base, rest: [createKnowledgeBase], binding: name+semantics, confidence: high}
+- {tool: update_knowledge_base, category: knowledge-base, rest: [updateKnowledgeBase], binding: name+semantics, confidence: high}
+- {tool: delete_knowledge_base, category: knowledge-base, rest: [deleteKnowledgeBase], binding: name+semantics, confidence: high}
+- {tool: list_organization_phone_numbers, category: phone-numbers, rest: [listPhoneNumbers], binding: name+semantics, confidence: high}
+- {tool: get_organization_phone_number, category: phone-numbers, rest: [getPhoneNumber], binding: name+semantics, confidence: high}
+- {tool: search_plivo_numbers, category: phone-numbers, rest: [searchAvailablePhoneNumbers], binding: name+semantics, confidence: high}
+- {tool: purchase_phone_number, category: phone-numbers, rest: [purchasePhoneNumber], binding: name+semantics, confidence: high, note: billable; confirmation required}
+- {tool: create_sip_trunk, category: phone-numbers, rest: [linkSipTrunk], binding: semantics, confidence: high}
+- {tool: delete_phone_number, category: phone-numbers, rest: [deletePhoneNumber], binding: name+semantics, confidence: high, note: destructive; confirmation required}
+- {tool: list_phone_number_pricing, category: phone-numbers, rest: [listPhoneNumberPricing], binding: name+semantics, confidence: high}
+- {tool: list_countries, category: phone-numbers, rest: [listPhoneCountryRules], binding: semantics, confidence: medium}
+- {tool: list_org_phone_country_rules, category: phone-numbers, rest: [listPhoneCountryRules], binding: name+semantics, confidence: high}
+- {tool: list_enabled_network_groups, category: phone-numbers, rest: [listEnabledTelephonyNetworkGroups], binding: name+semantics, confidence: high}
+- {tool: list_llms, category: reference-data, rest: [listLlms], binding: name+semantics, confidence: high}
+- {tool: get_llm, category: reference-data, rest: [getLlm], binding: name+semantics, confidence: high}
+- {tool: list_fallback_llms, category: reference-data, rest: [listFallbackLlms], binding: name+semantics, confidence: high}
+- {tool: list_languages, category: reference-data, rest: [listLanguages], binding: name+semantics, confidence: high}
+- {tool: get_language, category: reference-data, rest: [getLanguage], binding: name+semantics, confidence: high}
+- {tool: list_voices, category: reference-data, rest: [listVoices], binding: name+semantics, confidence: high}
+- {tool: get_voice, category: reference-data, rest: [getVoice], binding: name+semantics, confidence: high}
+- {tool: get_voice_languages, category: reference-data, rest: [listVoiceLanguages], binding: name+semantics, confidence: high}
+- {tool: list_transcribers, category: reference-data, rest: [listTranscribers], binding: name+semantics, confidence: high}
+- {tool: get_transcriber, category: reference-data, rest: [getTranscriber], binding: name+semantics, confidence: high}
+- {tool: list_fallback_transcribers, category: reference-data, rest: [listFallbackTranscribers], binding: name+semantics, confidence: high}
+- {tool: list_user_webhooks, category: webhooks, rest: [listWebhooks], binding: name+semantics, confidence: high}
+- {tool: get_user_webhook, category: webhooks, rest: [getWebhook], binding: name+semantics, confidence: high}
+- {tool: list_workflows, category: workflows, rest: [listWorkflows], binding: name+semantics, confidence: high}
+- {tool: get_workflow, category: workflows, rest: [getWorkflow], binding: name+semantics, confidence: high}
+- {tool: list_workflow_leads, category: workflows, rest: [listWorkflowLeads], binding: name+semantics, confidence: high}
+- {tool: get_workflow_lead_variable_keys, category: workflows, rest: [listWorkflowLeadVariableKeys], binding: name+semantics, confidence: high}
+- {tool: get_workflow_lead_history, category: workflows, rest: [getWorkflowLeadHistory], binding: name+semantics, confidence: high}
+- {tool: update_workflow_status, category: workflows, rest: [updateWorkflowStatus], binding: name+semantics, confidence: high}
+- {tool: remove_workflow_lead, category: workflows, rest: [deleteWorkflowLead], binding: semantics, confidence: high}
+- {tool: list_organization_folders, category: organization, rest: [listOrganizationFolders], binding: name+semantics, confidence: high}
+mcp_only:
+- {tool: publish_agent, reason: agent version publishing is dashboard/MCP-surface only; no public REST operation}
+- {tool: duplicate_agent, reason: no public REST operation}
+- {tool: list_agent_versions, reason: versions are embedded in getAgent's response; no dedicated REST operation}
+- {tool: get_agent_version, reason: no dedicated REST operation}
+- {tool: list_agent_functions, reason: no public REST operation}
+- {tool: get_agent_builder_inventory, reason: builder-composite; no public REST operation}
+- {tool: get_call_retries, reason: retry history is dashboard/MCP-surface only}
+- {tool: get_call_transfer, reason: transfer detail is dashboard/MCP-surface only}
+- {tool: redact_call, reason: destructive redaction has no public REST operation}
+- {tool: list_calls_in_batch, reason: composite over calls filtered by batch id}
+- {tool: list_batch_call_leads, reason: no public REST operation}
+- {tool: clean_batch_call_names, reason: utility; no public REST operation}
+- {tool: preview_batch_call_leads, reason: no public REST operation}
+- {tool: delete_campaign, reason: no public REST delete for batch calls; REST offers status cancel only}
+- {tool: get_knowledge_base_affected_agents, reason: no public REST operation}
+- {tool: get_phone_number_active_workflows, reason: no public REST operation}
+- {tool: create_workflow, reason: workflow creation is dashboard/MCP-surface only in the public contract}
+- {tool: get_workflow_structure, reason: no public REST operation}
+- {tool: add_workflow_node, reason: graph editing is MCP/dashboard-surface only}
+- {tool: update_workflow_node, reason: graph editing is MCP/dashboard-surface only}
+- {tool: delete_workflow_node, reason: graph editing is MCP/dashboard-surface only}
+- {tool: add_workflow_edge, reason: graph editing is MCP/dashboard-surface only}
+- {tool: delete_workflow_edge, reason: graph editing is MCP/dashboard-surface only}
+- {tool: list_templates, reason: agent templates have no public REST operation}
+- {tool: get_template, reason: agent templates have no public REST operation}
+- {tool: get_spend_limits, reason: billing surface has no public REST operations}
+- {tool: get_billing_alert_emails, reason: billing surface has no public REST operations}
+- {tool: get_wallet_balance, reason: billing surface has no public REST operations}
+- {tool: list_billing_plans, reason: billing surface has no public REST operations}
+- {tool: get_billing_plan, reason: billing surface has no public REST operations}
+- {tool: get_billing_plan_sip_rate, reason: billing surface has no public REST operations}
+- {tool: get_external_webhook, reason: external (dashboard-configured) webhooks differ from REST user-webhooks}
+- {tool: get_my_organization, reason: no public REST operation returns the current organization}
+- {tool: create_organization_folder, reason: REST exposes folder list/get only}
+- {tool: update_organization_folder, reason: REST exposes folder list/get only}
+- {tool: delete_organization_folder, reason: REST exposes folder list/get only}
+- {tool: move_agent_to_folder, reason: no public REST operation}
+- {tool: get_dashboard_stats, reason: dashboard metrics have no public REST operations}
+- {tool: get_dashboard_weekly_stats, reason: dashboard metrics have no public REST operations}
+- {tool: list_active_agents, reason: dashboard metric; no public REST operation}
+- {tool: list_integrations, reason: integrations surface has no public REST operations}
+- {tool: create_integration_connect_token, reason: integrations surface has no public REST operations}
+- {tool: validate_integration_connection, reason: integrations surface has no public REST operations}
+- {tool: disconnect_integration, reason: integrations surface has no public REST operations}
+- {tool: request_integration_access, reason: integrations surface has no public REST operations}
+- {tool: get_prompt_suggestions_for_agent, reason: AI prompt suggestions have no public REST operation}
+rest_only:
+- {operation: createWebhook, reason: MCP webhook tools are read-only by design (no secrets exposure)}
+- {operation: updateWebhook, reason: MCP webhook tools are read-only by design}
+- {operation: deleteWebhook, reason: MCP webhook tools are read-only by design}
+- {operation: getBatchCall, reason: mapped indirectly via campaign tools}
+- {operation: uploadWorkflowLeads, reason: CSV upload flow has no documented MCP tool}
+- {operation: listVoiceAccents, reason: no documented MCP tool}
+- {operation: listSpeechToSpeechVoices, reason: no documented MCP tool}
+- {operation: getOrganizationFolder, reason: MCP exposes list + create/update/delete but no single-folder get binding documented}
+- {operation: reviewAgentPrompt, reason: added to the spec after the MCP tool docs; get_prompt_suggestions_for_agent is the nearest MCP tool but the binding is unconfirmed}
+- {operation: acknowledgePromptReviewFinding, reason: no documented MCP tool}
+coverage:
+  mcp_tools: 97
+  bound_to_rest: 51
+  mcp_only: 46
+  rest_operations: 56
+  rest_only: 10

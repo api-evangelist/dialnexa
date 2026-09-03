@@ -1,0 +1,53 @@
+generated: '2026-09-03'
+method: derived
+source: openapi/_original/dialnexa-openapi.json + https://dialnexa.com/docs/data/call-data-model.md
+description: >-
+  Entity graph of the DialNexa /v1 surface, derived from id-reference fields in the OpenAPI and
+  the published call data model. IDs are prefixed strings passed verbatim.
+id_prefixes:
+  agent: agent_
+  call: call_
+  batch_call: batch_
+  workflow: workflow_
+  transfer: transfer_
+  organization: org_
+entities:
+- name: Agent
+  description: Versioned voice AI agent; versions are published and pinned to live routes.
+  relationships:
+  - {kind: has_many, target: AgentVersion, via: embedded versions in getAgent}
+  - {kind: has_many, target: Call, via: call.agent_id}
+- name: Call
+  description: One phone call with status, direction, transcript, recording, summary, post-call analysis, cost.
+  relationships:
+  - {kind: belongs_to, target: Agent, via: agent_id}
+  - {kind: belongs_to, target: BatchCall, via: category_id when category=batch}
+  - {kind: has_one, target: CallTransfer, via: call_transfer on transferred calls}
+- name: BatchCall
+  description: Batch calling campaign with recipient leads, retry counters, and lifecycle statuses.
+  relationships:
+  - {kind: has_many, target: Call, via: category_id}
+- name: Workflow
+  description: Node-based automation graph (call, condition, time, application nodes) executing leads.
+  relationships:
+  - {kind: has_many, target: WorkflowLead, via: "/v1/workflows/{workflowId}/leads"}
+- name: WorkflowLead
+  description: One lead traversing a workflow; node-by-node execution history.
+  relationships:
+  - {kind: belongs_to, target: Workflow, via: workflowId}
+  - {kind: has_many, target: Call, via: call ids in lead history}
+- name: KnowledgeBase
+  description: Document container attached to agent versions for retrieval context.
+  relationships:
+  - {kind: has_many, target: Agent, via: attachment to agent versions}
+- name: PhoneNumber
+  description: Purchased Plivo number or linked SIP trunk, assigned inbound/outbound agent versions.
+  relationships:
+  - {kind: belongs_to, target: Organization, via: workspace scoping}
+  - {kind: has_one, target: Agent, via: inbound/outbound agent version assignment}
+- name: Webhook
+  description: User webhook endpoint receiving signed call lifecycle events.
+- name: Voice / Language / LLM / Transcriber
+  description: Read-only reference catalogs resolved into agent configuration.
+notes:
+- All resources are scoped to the organization owning the API key; cross-org ids return 404.

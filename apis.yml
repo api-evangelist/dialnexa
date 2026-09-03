@@ -4,11 +4,13 @@ description: >-
   DialNexa is a Voice AI agents platform for sales calls, lead qualification, follow-ups, meeting
   booking, collections and support workflows, with a strong focus on Indian-market multilingual
   calling (English, Hindi, Hinglish, Marathi, Kannada, Gujarati, Tamil, Telugu, Bengali and
-  mixed-language calls). The public contract is an OpenAPI 3.0 document of 41 paths and 54
+  mixed-language calls). The public contract is an OpenAPI 3.0 document of 43 paths and 56
   operations served from api.dialnexa.com with bearer authentication. DialNexa publishes an
   RFC 9727 api-catalog as a proper application/linkset+json document, two llms.txt files (a site
-  index and a 90KB documentation index), and an auth.md written explicitly for AI agents and
-  automation systems describing how API keys are provisioned.
+  index and a 90KB documentation index), an auth.md written explicitly for AI agents and
+  automation systems describing how API keys are provisioned, an official remote MCP server at
+  api.dialnexa.com/v1/mcp (OAuth 2.1 with PKCE, 97 documented tools), and a provider-published
+  Agent Skill served from /.well-known/agent-skills/.
 type: Index
 url: https://raw.githubusercontent.com/api-evangelist/dialnexa/refs/heads/main/apis.yml
 deliveryModel:
@@ -24,7 +26,7 @@ deliveryModel:
   generated: '2026-08-28'
   method: derived
 created: '2026-08-21'
-modified: '2026-08-21'
+modified: '2026-09-03'
 specificationVersion: '0.23'
 tags:
 - Voice AI
@@ -252,6 +254,10 @@ apis:
   - type: Authentication
     url: authentication/dialnexa-auth.md
 common:
+- type: DomainSecurity
+  url: security/dialnexa-domain-security.yml
+- type: Authentication
+  url: authentication/dialnexa-authentication.yml
 - type: APICatalog
   url: well-known/dialnexa-api-catalog.json
 - type: LLMsTxt
@@ -261,10 +267,65 @@ common:
 - type: DeveloperPortal
   url: https://dialnexa.com/docs
 - type: Plans
+  url: plans/dialnexa-plans-pricing.yml
+- type: MCPServer
+  url: mcp/dialnexa-mcp.yml
+- type: ToolCrosswalk
+  url: mcp/dialnexa-tool-crosswalk.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: Webhooks
+  url: asyncapi/dialnexa-webhooks.yml
+- type: WellKnown
+  url: well-known/dialnexa-well-known.yml
+- type: Conformance
+  url: conformance/dialnexa-conformance.yml
+- type: ErrorCatalog
+  url: errors/dialnexa-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/dialnexa-lifecycle.yml
+- type: Deprecation
+  url: lifecycle/dialnexa-lifecycle.yml
+- type: OAuthScopes
+  url: scopes/dialnexa-scopes.yml
+- type: Conventions
+  url: conventions/dialnexa-conventions.yml
+- type: RateLimits
+  url: rate-limits/dialnexa-rate-limits.yml
+- type: Packages
+  url: packages/dialnexa-packages.yml
+- type: SDKs
+  url: packages/dialnexa-packages.yml
+- type: Sandbox
+  url: sandbox/dialnexa-sandbox.yml
+- type: DataModel
+  url: data-model/dialnexa-data-model.yml
+- type: Overlay
+  url: overlays/dialnexa-api-overlay.yaml
+- type: Documentation
+  url: https://dialnexa.com/docs
+- type: APIReference
+  url: https://dialnexa.com/docs/api-reference/introduction
+- type: GettingStarted
+  url: https://dialnexa.com/docs/api-reference/quickstart
+- type: TermsOfService
+  url: https://dialnexa.com/terms
+- type: PrivacyPolicy
+  url: https://dialnexa.com/privacy-policy
+- type: Blog
+  url: https://dialnexa.com/blogs/
+- type: SignUp
+  url: https://app.dialnexa.com/auth/login
+- type: GitHubOrganization
+  url: https://github.com/dialnexa
+- type: Support
+  url: https://dialnexa.com/faq
+- type: Pricing
   url: https://dialnexa.com/pricing
 maintainers:
 - FN: DialNexa
   url: https://dialnexa.com
+  email: dev@dialnexa.com
 x-provenance:
   added: '2026-08-21'
   method: searched
@@ -282,3 +343,8 @@ x-provenance:
     application/linkset+json api-catalog, a 352KB OpenAPI under /docs/api-reference/, a 90KB
     documentation llms.txt, and an auth.md addressed to AI agents. Guessing paths on a soft-200
     host produces a false negative; the provider's own index is the authority.
+x-enrichment:
+  date: '2026-09-03'
+  status: enriched
+  artifacts_added: 27
+  pass: local-v2

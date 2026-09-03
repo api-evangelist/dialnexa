@@ -1,0 +1,84 @@
+generated: '2026-09-03'
+method: probed
+source: https://dialnexa.com/.well-known/ + https://api.dialnexa.com/.well-known/
+note: >-
+  DialNexa serves a rich discovery surface on TWO hosts. dialnexa.com publishes an RFC 9727
+  api-catalog (proper application/linkset+json), RFC 8414 authorization-server metadata with a
+  custom agent_auth block that points at a provider-published Agent Skill under
+  /.well-known/agent-skills/dialnexa/SKILL.md (saved to skills/dialnexa-agent-skill.md), and RFC
+  9728 protected-resource metadata for the REST API. api.dialnexa.com publishes full OAuth 2.1
+  authorization-server metadata (PKCE S256, PAR, DPoP, scopes mcp:read/mcp:write/offline_access/
+  openid) plus openid-configuration (byte-identical) and protected-resource metadata for the MCP
+  endpoint https://api.dialnexa.com/v1/mcp. No security.txt on any host. dialnexa.com answers 200
+  with a ~15KB SPA shell for unknown /.well-known/* paths (openid-configuration among them) —
+  those soft-200s are recorded as status 200 with note soft-200 and are NOT documents.
+  www.dialnexa.com mirrors dialnexa.com byte-for-byte and is not indexed separately.
+hosts:
+- host: dialnexa.com
+  documents:
+  - path: /.well-known/api-catalog
+    status: 200
+    file: well-known/dialnexa-api-catalog.json
+    content_type: application/linkset+json
+  - path: /.well-known/oauth-authorization-server
+    status: 200
+    file: well-known/dialnexa-oauth-authorization-server.json
+    content_type: application/json
+    note: issuer https://dialnexa.com; carries custom agent_auth block for AI-agent key provisioning
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    file: well-known/dialnexa-oauth-protected-resource.json
+    content_type: application/json
+    note: resource https://api.dialnexa.com/v1; credential_provisioning block documents API-key registration
+  - path: /.well-known/agent-skills/dialnexa/SKILL.md
+    status: 200
+    file: skills/dialnexa-agent-skill.md
+    content_type: text/markdown
+    note: provider-published Agent Skill, discovered via the agent_auth.skill field of the authorization-server metadata
+  - path: /.well-known/jwks.json
+    status: 200
+    file: well-known/dialnexa-jwks.json
+    content_type: application/json
+    note: 'served but empty: {"keys": []}'
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 200
+    note: soft-200 SPA shell (text/html, ~15KB), not a document
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+  - path: /.well-known/aauth-resource.json
+    status: 404
+- host: api.dialnexa.com
+  documents:
+  - path: /.well-known/oauth-authorization-server
+    status: 200
+    file: well-known/dialnexa-api-oauth-authorization-server.json
+    content_type: application/json
+    note: OAuth 2.1 AS for the MCP endpoint — PKCE S256, PAR, DPoP, client_id_metadata_document_supported
+  - path: /.well-known/openid-configuration
+    status: 200
+    file: well-known/dialnexa-api-openid-configuration.json
+    content_type: application/json
+    note: byte-identical to the oauth-authorization-server document
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    file: well-known/dialnexa-api-oauth-protected-resource.json
+    content_type: application/json
+    note: resource https://api.dialnexa.com/v1/mcp; scopes mcp:read, mcp:write, offline_access
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+  - path: /.well-known/aauth-resource.json
+    status: 404

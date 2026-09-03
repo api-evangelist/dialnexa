@@ -1,0 +1,25 @@
+{
+  "issuer": "https://dialnexa.com",
+  "authorization_endpoint": "https://app.dialnexa.com/auth/login",
+  "token_endpoint": "https://dialnexa.com/api/oauth/token",
+  "jwks_uri": "https://dialnexa.com/.well-known/jwks.json",
+  "registration_endpoint": "https://app.dialnexa.com/dashboard/workspace",
+  "response_types_supported": [],
+  "grant_types_supported": [],
+  "token_endpoint_auth_methods_supported": [],
+  "scopes_supported": [],
+  "service_documentation": "https://dialnexa.com/docs/api-reference/authentication.md",
+  "agent_auth": {
+    "skill": "https://dialnexa.com/.well-known/agent-skills/dialnexa/SKILL.md",
+    "register_uri": "https://app.dialnexa.com/dashboard/workspace",
+    "identity_types_supported": [
+      "account_api_key"
+    ],
+    "credential_types_supported": [
+      "api_key_bearer"
+    ],
+    "registration_instructions": "Sign in at https://app.dialnexa.com/auth/login, then open Dashboard -> Workspace settings -> Developer -> Add key.",
+    "documentation_uri": "https://dialnexa.com/docs/api-reference/authentication.md"
+  },
+  "note": "DialNexa public API access currently uses dashboard-provisioned API keys passed as bearer credentials. Public OAuth token issuance is not available."
+}

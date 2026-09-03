@@ -1,0 +1,106 @@
+generated: '2026-09-03'
+method: searched
+source: https://dialnexa.com/docs/api-reference/reliability.md + https://dialnexa.com/docs/api-reference/pagination.md + https://dialnexa.com/docs/api-reference/errors.md
+description: >-
+  Cross-cutting runtime semantics of the DialNexa /v1 REST API, from the provider's reliability,
+  pagination, and error references plus the published OpenAPI.
+authentication:
+  style: bearer-api-key
+  header: 'Authorization: Bearer key_id:secret'
+  detail: authentication/dialnexa-authentication.yml
+idempotency:
+  coverage: none
+  header: null
+  detail: >-
+    The provider states it outright: "The current v1 contract does not define a platform-wide
+    idempotency header ... Do not send an invented idempotency key." The documented
+    duplicate-protection pattern is client-side - attach a stable correlation value in metadata
+    on create-call, then list-and-reconcile after any timeout before re-submitting. Billable
+    creates (createCall, createBatchCall) must never be retried blindly.
+  docs: https://dialnexa.com/docs/api-reference/reliability
+pagination:
+  style: page-number
+  params: [page, limit]
+  standardized: false
+  detail: >-
+    List endpoints do NOT share one envelope; the provider documents the exact shape per endpoint.
+    Records live under data (workflows, workflow leads), items (batch-calls, phone-numbers,
+    knowledge-base), voices, webhooks, agents, or the root array (calls, languages, llms,
+    transcribers). Pagination metadata varies: meta.totalItems/itemsPerPage/totalPages/currentPage,
+    top-level total/page/limit(/totalPages), count, or none at all - calls accepts page and limit
+    but returns no metadata (documented max limit 200; page forward until short page).
+  docs: https://dialnexa.com/docs/api-reference/pagination
+error_envelope:
+  shape: '{statusCode, message, error}'
+  format: custom (not RFC 9457)
+  detail: errors/dialnexa-problem-types.yml
+rate_limiting:
+  documented: false
+  observed_headers: [x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset]
+  retry_after: honored when present on 429
+  detail: rate-limits/dialnexa-rate-limits.yml
+versioning:
+  style: url-path (/v1)
+  detail: lifecycle/dialnexa-lifecycle.yml
+request_id_tracing:
+  documented: false
+field_expansion:
+  documented: false
+retry_classification:
+  detail: >-
+    The provider publishes a five-class retry table: read-only (safe after network errors/429/5xx),
+    state transition (read-then-retry), resource creation (search before re-create), billable
+    external action (never retry blindly), destructive action (read first; later 404 may mean the
+    delete completed).
+  docs: https://dialnexa.com/docs/api-reference/reliability
+reversibility:
+  summary: >-
+    No write on the /v1 surface has a documented undo. The reversal-shaped operations are status
+    transitions: batch campaigns and workflows can be paused and resumed (reversible transitions)
+    and cancelled/deactivated (terminal). Deletes (agent, knowledge base, phone number, webhook,
+    workflow lead) are permanent with no restore window documented. The MCP redact_call tool is
+    documented as destructive. No reversal windows are stated anywhere in the docs.
+  writes:
+  - operation: updateBatchCallStatus
+    reversal: pause <-> resume are mutually reversing; cancel is terminal
+    window: not stated
+    grade: documented
+    docs: https://dialnexa.com/docs/api-reference/v1/batches/status
+  - operation: updateWorkflowStatus
+    reversal: pause <-> resume / activate <-> deactivate transitions
+    window: not stated
+    grade: documented
+    docs: https://dialnexa.com/docs/api-reference/v1/workflows/status
+  - operation: createCall
+    reversal: none documented (a placed call cannot be recalled)
+    grade: none
+  - operation: createBatchCall
+    reversal: cancel remaining recipients via updateBatchCallStatus; already-placed calls are not reversible
+    window: while the campaign is not completed
+    grade: documented
+  - operation: deleteAgent
+    reversal: none documented
+    grade: none
+  - operation: deleteKnowledgeBase
+    reversal: none documented
+    grade: none
+  - operation: deletePhoneNumber
+    reversal: none documented
+    grade: none
+  - operation: deleteWebhook
+    reversal: none documented
+    grade: none
+  - operation: deleteWorkflowLead
+    reversal: none documented
+    grade: none
+  - operation: purchasePhoneNumber
+    reversal: deletePhoneNumber releases the number; no refund window stated
+    grade: documented
+dry_run:
+  documented: false
+  note: No test mode or dry-run flag on the /v1 API; MCP preview_batch_call_leads previews leads before a batch is created.
+cross_links:
+- errors/dialnexa-problem-types.yml
+- lifecycle/dialnexa-lifecycle.yml
+- authentication/dialnexa-authentication.yml
+- rate-limits/dialnexa-rate-limits.yml

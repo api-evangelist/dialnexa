@@ -1,0 +1,65 @@
+generated: '2026-09-03'
+method: derived
+source: openapi/_original/dialnexa-openapi.json + https://dialnexa.com/docs/api-reference/errors.md
+format: custom-envelope
+description: >-
+  DialNexa does NOT use RFC 9457 problem+json. Every error returns a three-field JSON envelope
+  {statusCode, message, error} where message is a string or an array of per-field validation
+  strings and error is the short HTTP status name. Derived from the 4xx/5xx responses declared
+  across the 54-operation OpenAPI and enriched from the provider's error reference.
+envelope:
+  statusCode: integer HTTP status
+  message: string or array of validation messages
+  error: short HTTP status name (e.g. "Bad Request")
+problem_types:
+- status: 400
+  title: Bad Request
+  detail: Request body or query parameters failed validation; message is an array when several fields fail. Phone numbers must be E.164.
+  declared_on_operations: 29
+  retry: no
+- status: 401
+  title: Unauthorized
+  detail: Missing, malformed, revoked, or expired API key; send the full key_id:secret value as the Bearer token.
+  declared_on_operations: 52
+  retry: no
+- status: 402
+  title: Payment Required
+  detail: Declared on one operation (billable action without available balance).
+  declared_on_operations: 1
+  retry: no
+- status: 403
+  title: Forbidden
+  detail: Key lacks permission, or the outbound destination is blocked by workspace Telephony Config (country / network-group route not enabled).
+  declared_on_operations: 43
+  retry: no
+- status: 404
+  title: Not Found
+  detail: Resource does not exist or belongs to a different organization; also returned by legacy unversioned routes retired 2026-07-31.
+  declared_on_operations: 28
+  retry: no
+- status: 409
+  title: Conflict
+  detail: Operation conflicts with current resource state (e.g. registering an existing phone number, invalid status action).
+  declared_on_operations: 6
+  retry: no
+- status: 422
+  title: Unprocessable Entity
+  detail: Used by some platform services for semantic validation; depend on it only where the endpoint contract lists it.
+  declared_on_operations: 0
+  retry: no
+- status: 429
+  title: Too Many Requests
+  detail: Gateway or service rate limit reached; retry with exponential backoff and honor Retry-After only when present.
+  declared_on_operations: 0
+  retry: backoff
+- status: 500
+  title: Internal Server Error
+  detail: Unexpected server error; retry reads with capped backoff, retry writes only when confirmed side-effect-free.
+  declared_on_operations: 44
+  retry: reads-only
+- status: 502
+  title: Bad Gateway
+  detail: Declared on one operation; transient upstream failure.
+  declared_on_operations: 1
+  retry: reads-only
+docs: https://dialnexa.com/docs/api-reference/errors

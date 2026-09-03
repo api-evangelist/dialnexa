@@ -1,0 +1,25 @@
+generated: '2026-09-03'
+method: searched
+source: https://dialnexa.com/docs/sdks/overview.md + https://dialnexa.com/docs/agents/testing-agents.md + https://dialnexa.com/docs/mcp-tools/quickstart.md
+description: >-
+  DialNexa has no separate sandbox environment, test-mode key prefixes, or simulated telephony -
+  testing happens against production with real (billable) calls. What the provider does publish:
+  an interactive playground on every endpoint reference page ("Every endpoint in the reference
+  includes a built-in playground for quick testing"), a documented agent-testing flow using phone
+  test calls against published agent versions with country validation and dynamic variables, and
+  explicit guidance to use a dedicated test workspace when evaluating MCP tools that change data
+  or spend wallet balance. The MCP preview_batch_call_leads tool previews leads before a campaign
+  is created.
+console:
+  type: docs-playground
+  url: https://dialnexa.com/docs/api-reference/introduction
+  note: Mintlify API playground embedded in each endpoint page; runs against production with a real API key.
+test_mode:
+  separate_environment: false
+  test_key_prefixes: null
+  test_values: null
+  note: No published test phone numbers or fixture values; phone test calls are real calls to a validated recipient number.
+practices:
+- Use a dedicated test workspace for evaluating state-changing or billable MCP tools.
+- Test agents with phone test calls against published versions before assigning live routes.
+- Preview batch leads (MCP preview_batch_call_leads) before creating a campaign.

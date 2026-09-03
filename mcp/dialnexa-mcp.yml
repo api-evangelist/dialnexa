@@ -1,0 +1,93 @@
+generated: '2026-09-03'
+method: searched
+source: https://dialnexa.com/docs/mcp-tools/overview.md
+name: DialNexa MCP Server
+description: >-
+  Official hosted remote MCP server for the DialNexa Voice AI platform. Implements stateless MCP
+  Streamable HTTP at https://api.dialnexa.com/v1/mcp with OAuth 2.1 (authorization-code + PKCE,
+  workspace selection at consent) or a workspace API key as a Bearer token. Documented tool
+  reference covers 97 tools across 14 families: agents, calls, batch calls, workflows, knowledge
+  base, phone numbers, reference data, templates, billing, webhooks, organization, dashboard,
+  integrations, and prompt suggestions. Every reference page classifies its tool as read-only,
+  state-changing, destructive, or billable, and billable/destructive tools require explicit
+  user confirmation.
+deployment:
+  mode: remote
+  endpoint: https://api.dialnexa.com/v1/mcp
+  auth: oauth
+  verified: probed
+status: official
+documentation: https://dialnexa.com/docs/mcp-tools/overview
+x-evidence:
+  probed: '2026-09-03'
+  url: https://api.dialnexa.com/v1/mcp
+  request: 'POST tools/list (anonymous)'
+  http_status: 401
+  www_authenticate: 'Bearer resource_metadata="https://api.dialnexa.com/.well-known/oauth-protected-resource"'
+  note: >-
+    The live tools/list is auth-gated (401 with an RFC 9728 protected-resource challenge), so the
+    tool list below is taken from the provider's own per-tool documentation pages
+    (https://dialnexa.com/docs/mcp-tools/...), not from live introspection. Input schemas require
+    an authenticated session. The 401 response also carried live rate-limit headers
+    (x-ratelimit-limit: 150, x-ratelimit-reset: 60).
+oauth:
+  authorization_server_metadata: https://api.dialnexa.com/.well-known/oauth-authorization-server
+  protected_resource_metadata: https://api.dialnexa.com/.well-known/oauth-protected-resource
+  resource: https://api.dialnexa.com/v1/mcp
+  scopes:
+  - mcp:read
+  - mcp:write
+  - offline_access
+  pkce: S256
+  dpop_supported: true
+  notes: API-key Bearer auth is the documented alternative for clients that support custom headers.
+protocol:
+  transport: streamable-http
+  stateless: true
+  discovery: tools/list
+  result_shape: one text content block containing JSON-encoded result; tool failures set isError true
+  id_convention: 'prefixed IDs passed verbatim: agent_..., call_..., batch_..., workflow_...'
+tools:
+- family: agents
+  docs: https://dialnexa.com/docs/mcp-tools/agents/overview
+  names: [list_agents, get_agent, create_agent, update_agent, publish_agent, duplicate_agent, delete_agent, list_agent_versions, get_agent_version, list_agent_functions, get_agent_builder_inventory]
+- family: calls
+  docs: https://dialnexa.com/docs/mcp-tools/calls/overview
+  names: [list_calls, get_call, get_call_details, get_call_retries, get_call_transfer, create_call, redact_call]
+- family: batch-calls
+  docs: https://dialnexa.com/docs/mcp-tools/batch-calls/overview
+  names: [list_batch_calls, list_calls_in_batch, list_batch_call_leads, clean_batch_call_names, preview_batch_call_leads, create_batch_call, update_batch_call_status, list_campaigns, get_campaign, get_campaign_status, delete_campaign]
+- family: workflows
+  docs: https://dialnexa.com/docs/mcp-tools/workflows/overview
+  names: [list_workflows, get_workflow, list_workflow_leads, get_workflow_lead_variable_keys, get_workflow_lead_history, update_workflow_status, remove_workflow_lead, create_workflow, get_workflow_structure, add_workflow_node, update_workflow_node, delete_workflow_node, add_workflow_edge, delete_workflow_edge]
+- family: knowledge-base
+  docs: https://dialnexa.com/docs/mcp-tools/knowledge-base/overview
+  names: [list_knowledge_base_documents, get_knowledge_base_document, get_knowledge_base_affected_agents, create_knowledge_base, update_knowledge_base, delete_knowledge_base]
+- family: phone-numbers
+  docs: https://dialnexa.com/docs/mcp-tools/phone-numbers/overview
+  names: [list_organization_phone_numbers, get_organization_phone_number, search_plivo_numbers, get_phone_number_active_workflows, purchase_phone_number, create_sip_trunk, delete_phone_number, list_phone_number_pricing, list_countries, list_org_phone_country_rules, list_enabled_network_groups]
+- family: reference-data
+  docs: https://dialnexa.com/docs/mcp-tools/reference-data/overview
+  names: [list_llms, get_llm, list_fallback_llms, list_languages, get_language, list_voices, get_voice, get_voice_languages, list_transcribers, get_transcriber, list_fallback_transcribers]
+- family: templates
+  docs: https://dialnexa.com/docs/mcp-tools/templates/overview
+  names: [list_templates, get_template]
+- family: billing
+  docs: https://dialnexa.com/docs/mcp-tools/billing/overview
+  names: [get_spend_limits, get_billing_alert_emails, get_wallet_balance, list_billing_plans, get_billing_plan, get_billing_plan_sip_rate]
+- family: webhooks
+  docs: https://dialnexa.com/docs/mcp-tools/webhooks/overview
+  names: [list_user_webhooks, get_user_webhook, get_external_webhook]
+- family: organization
+  docs: https://dialnexa.com/docs/mcp-tools/organization/overview
+  names: [get_my_organization, list_organization_folders, create_organization_folder, update_organization_folder, delete_organization_folder, move_agent_to_folder]
+- family: dashboard
+  docs: https://dialnexa.com/docs/mcp-tools/dashboard/overview
+  names: [get_dashboard_stats, get_dashboard_weekly_stats, list_active_agents]
+- family: integrations
+  docs: https://dialnexa.com/docs/mcp-tools/integrations/overview
+  names: [list_integrations, create_integration_connect_token, validate_integration_connection, disconnect_integration, request_integration_access]
+- family: prompt-suggestions
+  docs: https://dialnexa.com/docs/mcp-tools/prompt-suggestions/overview
+  names: [get_prompt_suggestions_for_agent]
+tool_count: 97

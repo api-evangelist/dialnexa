@@ -971,6 +971,428 @@
         ]
       }
     },
+    "/v1/agent-versions/{agentId}/version/{versionNumber}/prompt-review": {
+      "post": {
+        "description": "Reviews one agent version prompt and configuration without editing or publishing the agent.",
+        "operationId": "reviewAgentPrompt",
+        "parameters": [
+          {
+            "name": "agentId",
+            "required": true,
+            "in": "path",
+            "description": "Signed agent ID.",
+            "schema": {
+              "type": "string",
+              "example": "agent_2g7Xy3tY53gRlp"
+            }
+          },
+          {
+            "name": "versionNumber",
+            "required": true,
+            "in": "path",
+            "description": "Agent version number to review.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "example": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prompt_text": {
+                    "type": "string",
+                    "maxLength": 100000,
+                    "description": "Draft prompt text to review instead of the stored version prompt. Omit or send blank text to use the stored prompt."
+                  },
+                  "checks": {
+                    "type": "array",
+                    "description": "Check groups to run. Omit to run every group.",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "structure",
+                        "variables",
+                        "speech",
+                        "unknowable",
+                        "conflicts",
+                        "language",
+                        "models",
+                        "capture",
+                        "call_handling"
+                      ]
+                    }
+                  }
+                }
+              },
+              "examples": {
+                "focusedReview": {
+                  "summary": "Review speech, contradictions, and hallucination risks",
+                  "value": {
+                    "checks": [
+                      "speech",
+                      "conflicts",
+                      "unknowable"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Prompt review completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "review_fingerprint",
+                    "findings",
+                    "new_warning_count",
+                    "reviewed_at",
+                    "degraded",
+                    "cached",
+                    "fix_prefill"
+                  ],
+                  "properties": {
+                    "review_fingerprint": {
+                      "type": "string",
+                      "description": "SHA-256 fingerprint of the reviewed inputs."
+                    },
+                    "findings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "severity",
+                          "family",
+                          "kind",
+                          "message",
+                          "fingerprint",
+                          "acknowledged"
+                        ],
+                        "properties": {
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "warning",
+                              "info"
+                            ]
+                          },
+                          "family": {
+                            "type": "string",
+                            "enum": [
+                              "prompt",
+                              "config"
+                            ]
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "contradiction",
+                              "hallucination_risk",
+                              "undefined_variable",
+                              "unused_variable",
+                              "thin_prompt",
+                              "missing_section",
+                              "tts_dashes",
+                              "instruction_misaligned",
+                              "instruction_inert",
+                              "speech_unfriendly",
+                              "flow_break",
+                              "flow_note",
+                              "branch_gap",
+                              "fallback_without_model",
+                              "fallback_same_as_primary",
+                              "welcome_script_mismatch",
+                              "unused_knowledge_base",
+                              "postcall_field_ungrounded",
+                              "timeout_extreme"
+                            ]
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "evidence": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "fingerprint": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{40}$"
+                          },
+                          "acknowledged": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    },
+                    "new_warning_count": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "reviewed_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "degraded": {
+                      "type": "boolean"
+                    },
+                    "cached": {
+                      "type": "boolean"
+                    },
+                    "fix_prefill": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Review with one warning",
+                    "value": {
+                      "review_fingerprint": "12a8f88ad6f0f521347705e2af1417f1fc8396f2e2913fcb056082ee1c51723f",
+                      "findings": [
+                        {
+                          "severity": "warning",
+                          "family": "prompt",
+                          "kind": "undefined_variable",
+                          "message": "The prompt uses a variable that has no configured default.",
+                          "evidence": "{{customer_tier}}",
+                          "fingerprint": "6a763e1fa5d7c82cbb9e54e10d4232cfdd2423ba",
+                          "acknowledged": false
+                        }
+                      ],
+                      "new_warning_count": 1,
+                      "reviewed_at": "2026-08-31T03:15:00.000Z",
+                      "degraded": false,
+                      "cached": false,
+                      "fix_prefill": "Fix the unacknowledged prompt review warnings without changing the agent's intended call objective."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or path parameter.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agent version not found in the authenticated workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Review An Agent Prompt",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/v1/agent-versions/{agentId}/prompt-review/ack": {
+      "post": {
+        "description": "Accepts or dismisses one prompt review finding for future reviews of the same agent.",
+        "operationId": "acknowledgePromptReviewFinding",
+        "parameters": [
+          {
+            "name": "agentId",
+            "required": true,
+            "in": "path",
+            "description": "Signed agent ID returned by a previous prompt review.",
+            "schema": {
+              "type": "string",
+              "example": "agent_2g7Xy3tY53gRlp"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "finding_fingerprint",
+                  "kind",
+                  "status"
+                ],
+                "properties": {
+                  "finding_fingerprint": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$",
+                    "description": "Finding fingerprint returned by prompt review."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "maxLength": 40,
+                    "description": "Finding kind returned by prompt review."
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "dismissed"
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "dismissFinding": {
+                  "summary": "Dismiss one reviewed finding",
+                  "value": {
+                    "finding_fingerprint": "6a763e1fa5d7c82cbb9e54e10d4232cfdd2423ba",
+                    "kind": "undefined_variable",
+                    "status": "dismissed"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Finding acknowledgement stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "updated",
+                    "finding_fingerprint",
+                    "kind",
+                    "status",
+                    "acked_at"
+                  ],
+                  "properties": {
+                    "updated": {
+                      "type": "boolean",
+                      "description": "True when an existing acknowledgement was updated."
+                    },
+                    "finding_fingerprint": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{40}$"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "accepted",
+                        "dismissed"
+                      ]
+                    },
+                    "acked_by": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "acked_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "summary": "New acknowledgement",
+                    "value": {
+                      "updated": false,
+                      "finding_fingerprint": "6a763e1fa5d7c82cbb9e54e10d4232cfdd2423ba",
+                      "kind": "undefined_variable",
+                      "status": "dismissed",
+                      "acked_by": null,
+                      "acked_at": "2026-08-31T03:18:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid finding fingerprint, kind, or status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge A Prompt Review Finding",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
     "/v1/batch-calls": {
       "post": {
         "description": "Uploads a CSV or Excel leads file, creates a batch call, and enqueues outbound calls for all leads.",
@@ -8897,7 +9319,8 @@
             "type": "string",
             "enum": [
               "Single_Prompt_Agent",
-              "Conversational_Flow_Agent"
+              "Conversational_Flow_Agent",
+              "IVR_Agent"
             ]
           },
           "pipeline_type": {
@@ -8923,7 +9346,8 @@
               },
               "version_title": {
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "maxLength": 150
               },
               "title": {
                 "type": "string",
@@ -8958,6 +9382,12 @@
               "post_call_analysis_llm_id": {
                 "type": "string",
                 "nullable": true
+              },
+              "ivr_menu": {
+                "type": "object",
+                "nullable": true,
+                "description": "IVR menu graph for an IVR_Agent version.",
+                "additionalProperties": true
               }
             },
             "nullable": true
@@ -8975,7 +9405,8 @@
                 },
                 "version_title": {
                   "type": "string",
-                  "nullable": true
+                  "nullable": true,
+                  "maxLength": 150
                 },
                 "title": {
                   "type": "string",
@@ -9010,6 +9441,12 @@
                 "post_call_analysis_llm_id": {
                   "type": "string",
                   "nullable": true
+                },
+                "ivr_menu": {
+                  "type": "object",
+                  "nullable": true,
+                  "description": "IVR menu graph for an IVR_Agent version.",
+                  "additionalProperties": true
                 }
               }
             }
@@ -9312,6 +9749,10 @@
             "type": "string",
             "example": "llm_abc123",
             "description": "Signed LLM ID"
+          },
+          "supports_tool_calling": {
+            "type": "boolean",
+            "description": "Whether the model can be assigned to an agent that has tools or functions."
           }
         },
         "required": [
@@ -9557,7 +9998,8 @@
             "description": "Type of the agent",
             "enum": [
               "Single_Prompt_Agent",
-              "Conversational_Flow_Agent"
+              "Conversational_Flow_Agent",
+              "IVR_Agent"
             ],
             "example": "Single_Prompt_Agent",
             "default": "Single_Prompt_Agent"
@@ -9580,10 +10022,10 @@
           },
           "version_title": {
             "type": "string",
-            "description": "Version title (optional, will be auto-generated if not provided, max 35 characters)",
+            "description": "Version title. If omitted, DialNexa generates one automatically. Maximum 150 characters.",
             "example": null,
             "nullable": true,
-            "maxLength": 35
+            "maxLength": 150
           },
           "description": {
             "type": "string",
@@ -9762,7 +10204,7 @@
           "llm_fallback_delay_ms": {
             "type": "number",
             "description": "Milliseconds to wait before triggering the fallback LLM",
-            "example": 500,
+            "example": 200,
             "nullable": true
           },
           "llm_fallback_model": {
@@ -9910,6 +10352,11 @@
             "type": "boolean",
             "description": "Enable OpenAI Prompt Caching for this agent version. DialNexa must enable this feature for your workspace.",
             "example": false
+          },
+          "ivr_menu": {
+            "type": "object",
+            "description": "IVR menu graph for IVR_Agent. Prompt audio is rendered and cached when the agent is published.",
+            "additionalProperties": true
           }
         },
         "required": [
@@ -10488,10 +10935,10 @@
           },
           "version_title": {
             "type": "string",
-            "description": "Version title (optional, will be auto-generated if not provided, max 35 characters)",
+            "description": "Version title. If omitted, DialNexa generates one automatically. Maximum 150 characters.",
             "example": "Version 1.1",
             "nullable": true,
-            "maxLength": 35
+            "maxLength": 150
           },
           "description": {
             "type": "string",
@@ -10636,7 +11083,7 @@
           "llm_fallback_delay_ms": {
             "type": "number",
             "description": "Milliseconds to wait before triggering the fallback LLM",
-            "example": 500,
+            "example": 200,
             "nullable": true
           },
           "llm_fallback_model": {
@@ -10781,6 +11228,11 @@
             "type": "boolean",
             "description": "Enable OpenAI Prompt Caching for this agent version. DialNexa must enable this feature for your workspace.",
             "example": false
+          },
+          "ivr_menu": {
+            "type": "object",
+            "description": "IVR menu graph for IVR_Agent. Prompt audio is rendered and cached when the agent is published.",
+            "additionalProperties": true
           }
         },
         "required": [

@@ -1,0 +1,56 @@
+generated: '2026-09-03'
+method: derived
+source: well-known/ probes 2026-09-03 + openapi/_original/dialnexa-openapi.json + provider docs
+standards:
+- id: oauth2
+  conforms: true
+  evidence: >-
+    OAuth 2.1 authorization server for the MCP surface at https://api.dialnexa.com with RFC 8414
+    metadata (/.well-known/oauth-authorization-server, HTTP 200): authorization-code + PKCE S256,
+    pushed authorization requests, DPoP, token revocation. Saved at
+    well-known/dialnexa-api-oauth-authorization-server.json.
+- id: oidc
+  conforms: true
+  evidence: >-
+    /.well-known/openid-configuration served on api.dialnexa.com (HTTP 200, byte-identical to the
+    AS metadata) with openid scope, id_token RS256, userinfo endpoint.
+- id: rfc9728-protected-resource
+  conforms: true
+  evidence: >-
+    RFC 9728 protected-resource metadata served for both surfaces - api.dialnexa.com (resource
+    https://api.dialnexa.com/v1/mcp) and dialnexa.com (resource https://api.dialnexa.com/v1) - and
+    the MCP endpoint's 401 carries WWW-Authenticate: Bearer resource_metadata=... as the spec
+    requires (probed 2026-09-03).
+- id: rfc9727-api-catalog
+  conforms: true
+  evidence: >-
+    /.well-known/api-catalog on dialnexa.com returns a proper application/linkset+json document
+    (HTTP 200), saved at well-known/dialnexa-api-catalog.json.
+- id: mcp
+  conforms: true
+  evidence: >-
+    Remote MCP server (Streamable HTTP, stateless) at https://api.dialnexa.com/v1/mcp with
+    documented tools/list + tools/call behavior and OAuth 2.1 discovery; anonymous tools/list
+    probe returned the spec-shaped 401 challenge.
+- id: llms-txt
+  conforms: true
+  evidence: 'Site and docs llms.txt indexes served (llms/dialnexa-llms.txt, llms/dialnexa-docs-llms.txt).'
+- id: rfc9457
+  conforms: false
+  evidence: 'Errors use a custom {statusCode, message, error} envelope, not application/problem+json (errors/dialnexa-problem-types.yml).'
+- id: idempotency
+  conforms: false
+  evidence: 'Provider states the v1 contract defines no idempotency header (reliability docs); documented pattern is client-side correlation metadata.'
+- id: pagination
+  conforms: false
+  evidence: 'Page/limit params exist but envelopes are explicitly non-standardized per endpoint (pagination docs).'
+- id: e164
+  conforms: true
+  evidence: 'All phone-number inputs require E.164 format, enforced with 400 validation errors (errors docs).'
+domain_standards:
+  note: >-
+    Voice AI / telephony market. The contract declares no formal domain standard vocabulary
+    (no CAMARA, no TM Forum, no OpenRTB shape). Telephony interop is via SIP/BYOC trunking and
+    E.164 numbering, documented in prose and enforced in validation, not declared as a
+    machine-readable standard surface in the spec - recorded here without claiming a
+    domain_standard_conformance award.

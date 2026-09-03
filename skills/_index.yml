@@ -1,0 +1,20 @@
+generated: '2026-09-03'
+method: searched
+source: https://dialnexa.com/.well-known/agent-skills/dialnexa/SKILL.md
+skills:
+- file: skills/dialnexa-agent-skill.md
+  name: DialNexa Agent Skill
+  method: searched
+  source: https://dialnexa.com/.well-known/agent-skills/dialnexa/SKILL.md
+  note: >-
+    PROVIDER-PUBLISHED skill, saved verbatim. Served from a well-known path and advertised in the
+    agent_auth.skill field of https://dialnexa.com/.well-known/oauth-authorization-server.
+    Fetched 2026-09-03, HTTP 200, text/markdown.
+- file: skills/dialnexa-trigger-outbound-call.md
+  name: dialnexa-trigger-outbound-call
+  method: generated
+  api: dialnexa:dialnexa-calls-api
+- file: skills/dialnexa-run-batch-campaign.md
+  name: dialnexa-run-batch-campaign
+  api: dialnexa:dialnexa-batch-calls-api
+  method: generated

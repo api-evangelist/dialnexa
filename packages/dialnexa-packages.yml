@@ -1,0 +1,46 @@
+generated: '2026-09-03'
+method: searched
+source: https://registry.npmjs.org/dialnexa + https://pypi.org/pypi/dialnexa/json + https://dialnexa.com/docs/sdks/overview.md
+description: >-
+  DialNexa publishes first-party SDK packages on npm and PyPI (maintainer emails on the dialnexa.com
+  domain), but its own docs say the opposite: the SDK status page states "No first-party SDK
+  packages are available today. Use the HTTP API for production integrations." Both packages were
+  last released 2025-11-05 - roughly ten months before this probe - which is consistent with early
+  releases the provider no longer promotes. The planned @dialnexa/react and @dialnexa/react-native
+  packages do not exist on npm (404).
+package_count: 2
+packages:
+- name: dialnexa
+  registry: npm
+  url: https://www.npmjs.com/package/dialnexa
+  language: TypeScript/JavaScript
+  official: true
+  version: 1.0.3
+  published: '2025-11-05'
+  note: >-
+    "JavaScript SDK for dialnexa APIs" - fetch-based helpers for Languages, LLMs, Calls, Batch
+    Calls, Agents, Voices; ESM, Node 18+. Maintainer kamat96 <kamat@dialnexa.com>. Not mentioned
+    anywhere in the provider's docs, which recommend raw HTTP instead.
+- name: dialnexa
+  registry: pypi
+  url: https://pypi.org/project/dialnexa/
+  language: Python
+  official: true
+  version: 0.1.1
+  published: '2025-11-05'
+  note: >-
+    "DialNexa Python SDK", author DialNexa <dev@dialnexa.com>, homepage dialnexa.com, repository
+    github.com/dialnexa/python-sdk (the GitHub org exists but has zero public repos). Not mentioned
+    in the provider's docs.
+- name: '@dialnexa/react'
+  registry: npm
+  official: true
+  version: null
+  published: null
+  note: 'Planned, not released - registry returns 404 (probed 2026-09-03); docs list it as "Planned, not released".'
+- name: '@dialnexa/react-native'
+  registry: npm
+  official: true
+  version: null
+  published: null
+  note: 'Planned, not released - registry returns 404 (probed 2026-09-03).'

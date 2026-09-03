@@ -1,0 +1,38 @@
+generated: '2026-09-03'
+method: searched
+source: https://dialnexa.com/docs/api-reference/v1/migrating-to-v1.md + https://dialnexa.com/docs/api-reference/errors.md
+versioning:
+  scheme: url-path
+  current: v1
+  base: https://api.dialnexa.com/v1
+  note: >-
+    The stable public contract is the /v1 surface (OpenAPI 3.0, 54 operations). A migration guide
+    walks integrations off the legacy unversioned routes.
+deprecation:
+  policy_documented: true
+  docs: https://dialnexa.com/docs/api-reference/v1/migrating-to-v1
+  retirements:
+  - surface: legacy unversioned routes with confirmed /v1 replacements
+    retired: '2026-07-31'
+    behavior: return 404 Not Found after retirement
+  deprecated_fields:
+  - field: disconnection_reason (webhook call_ended hangup variant)
+    replacement: hangup_reason
+    note: alias still sent with identical value; documented as legacy
+  sunset_headers: not documented (no RFC 8594 Sunset/Deprecation headers published)
+status_page: null
+sla:
+  published: false
+  note: Enterprise plan advertises "SLA options" on the pricing page; no public SLA document.
+agent_versions:
+  note: >-
+    Product-level lifecycle - agents are versioned, published, and rolled back
+    (publish/assign/compare/roll back); live routes pin a published agent version.
+  docs: https://dialnexa.com/docs/agents/agent-versions-and-publishing
+x-probes:
+- url: https://status.dialnexa.com
+  status: dns-error
+  checked: '2026-09-03'
+- url: https://dialnexa.com/status
+  status: 200
+  note: soft-200 SPA shell; /status is not in the provider's own llms.txt page index — no status page exists
