@@ -177,6 +177,8 @@ apis:
   humanURL: https://dialnexa.com/docs
   baseURL: https://api.dialnexa.com
   tags:
+  - Voice
+  tags_raw:
   - Voices
   properties:
   - type: OpenAPI
@@ -243,6 +245,8 @@ apis:
   humanURL: https://dialnexa.com/docs
   baseURL: https://api.dialnexa.com
   tags:
+  - LLM
+  tags_raw:
   - LLMs
   properties:
   - type: OpenAPI
