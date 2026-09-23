@@ -535,55 +535,6 @@ paths:
       description: Returns the languages supported by one voice.
 components:
   schemas:
-    SpeechToSpeechVoicesResponse:
-      type: object
-      properties:
-        voices:
-          type: array
-          items:
-            $ref: '#/components/schemas/SpeechToSpeechVoice'
-      required:
-      - voices
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
-    SpeechToSpeechModel:
-      type: object
-      properties:
-        id:
-          type: string
-          example: llm_abc123456789
-        name:
-          type: string
-          example: GPT Realtime 2
-        provider:
-          type: string
-          example: openai
-        provider_id:
-          type: string
-          example: gpt-realtime-2
-      required:
-      - id
-      - name
-      - provider
-      - provider_id
     SpeechToSpeechLanguage:
       type: object
       properties:
@@ -654,6 +605,55 @@ components:
       - recording
       - languages
       - llms
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    SpeechToSpeechModel:
+      type: object
+      properties:
+        id:
+          type: string
+          example: llm_abc123456789
+        name:
+          type: string
+          example: GPT Realtime 2
+        provider:
+          type: string
+          example: openai
+        provider_id:
+          type: string
+          example: gpt-realtime-2
+      required:
+      - id
+      - name
+      - provider
+      - provider_id
+    SpeechToSpeechVoicesResponse:
+      type: object
+      properties:
+        voices:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeechToSpeechVoice'
+      required:
+      - voices
   securitySchemes:
     bearer:
       scheme: bearer
