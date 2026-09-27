@@ -490,38 +490,6 @@ paths:
       description: Returns the current call record, including routing, status, transcript, and analysis fields when available.
 components:
   schemas:
-    CreateCallResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          example: call_mfgsn90vwcozgb
-          description: Unique call ID for tracking. Use this ID to reference the call in other API endpoints.
-        to_phone_number:
-          type: string
-          example: '+911234567890'
-          description: The phone number that will receive the call.
-        agent_id:
-          type: string
-          example: agent_mfgsn90vwcozgb
-          description: The ID of the agent used for this call.
-        agent_version_number:
-          type: number
-          example: 2
-          description: The version number of the agent used for this call.
-      required:
-      - id
-      - to_phone_number
-      - agent_id
-    CallLogs:
-      type: object
-      properties:
-        id:
-          type: string
-          example: call_abc123
-          description: Signed call ID
-      required:
-      - id
     ErrorResponse:
       type: object
       properties:
@@ -542,6 +510,15 @@ components:
       - statusCode
       - message
       - error
+    CallLogs:
+      type: object
+      properties:
+        id:
+          type: string
+          example: call_abc123
+          description: Signed call ID
+      required:
+      - id
     CreateCallRequest:
       type: object
       properties:
@@ -575,6 +552,29 @@ components:
       - phone_number
       - agent_id
       - metadata
+    CreateCallResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: call_mfgsn90vwcozgb
+          description: Unique call ID for tracking. Use this ID to reference the call in other API endpoints.
+        to_phone_number:
+          type: string
+          example: '+911234567890'
+          description: The phone number that will receive the call.
+        agent_id:
+          type: string
+          example: agent_mfgsn90vwcozgb
+          description: The ID of the agent used for this call.
+        agent_version_number:
+          type: number
+          example: 2
+          description: The version number of the agent used for this call.
+      required:
+      - id
+      - to_phone_number
+      - agent_id
   securitySchemes:
     bearer:
       scheme: bearer

@@ -1,6 +1,6 @@
 openapi: 3.2.0
 info:
-  title: DialNexa LL Ms API
+  title: DialNexa LLMs API
   description: Public `/v1` REST API for the DialNexa voice AI platform.
   version: 1.0.0
 servers:

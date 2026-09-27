@@ -551,6 +551,15 @@ components:
       - id
       - name
       - code
+    SpeechToSpeechVoicesResponse:
+      type: object
+      properties:
+        voices:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeechToSpeechVoice'
+      required:
+      - voices
     SpeechToSpeechVoice:
       type: object
       properties:
@@ -645,15 +654,6 @@ components:
       - name
       - provider
       - provider_id
-    SpeechToSpeechVoicesResponse:
-      type: object
-      properties:
-        voices:
-          type: array
-          items:
-            $ref: '#/components/schemas/SpeechToSpeechVoice'
-      required:
-      - voices
   securitySchemes:
     bearer:
       scheme: bearer

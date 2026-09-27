@@ -638,25 +638,64 @@ paths:
       description: Returns one workspace phone number and its routing configuration.
 components:
   schemas:
-    PurchasePhoneNumberRequest:
+    PurchasePhoneNumberResponse:
       type: object
       properties:
         phoneNumber:
           type: string
           example: '+1234567890'
-          description: Phone number to purchase
-        telephonyProviderId:
+          description: Phone number
+        status:
           type: string
-          example: plivo_123456
-          description: ID of telephony provider (14-char string)
-        countryISO:
+          enum:
+          - active
+          - pending
+          description: Status of the phone number
+        message:
           type: string
-          example: US
-          description: Country ISO code (e.g., US, IN)
+          description: Status message
+        organizationPhoneNumber:
+          description: Organization phone number record
+          allOf:
+          - $ref: '#/components/schemas/OrganizationPhoneNumber'
       required:
       - phoneNumber
-      - telephonyProviderId
-      - countryISO
+      - status
+    PhoneNumberPricing:
+      type: object
+      properties:
+        telephony_provider_id:
+          type: string
+          example: tp_abc123xyz789
+        country_iso:
+          type: string
+          minLength: 2
+          maxLength: 3
+          example: IN
+        country_name:
+          type: string
+          example: India
+        credit_cost:
+          oneOf:
+          - type: number
+            format: double
+          - type: string
+          example: '500.0000'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        telephonyProvider:
+          type: object
+          additionalProperties: true
+          description: Associated telephony provider metadata.
+      required:
+      - telephony_provider_id
+      - country_iso
+      - country_name
+      - credit_cost
     EnabledTelephonyNetworkGroup:
       type: object
       properties:
@@ -697,15 +736,24 @@ components:
       - prefix_mode
       - from_phone_number_country_code
       - countryRule
-    OrganizationPhoneNumber:
+    AvailablePhoneNumbersResponse:
       type: object
       properties:
-        sip_trunk_enabled:
-          type: boolean
-          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
-          default: false
+        api_id:
+          type: string
+          description: API ID for the request
+        objects:
+          description: List of available phone numbers
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailablePhoneNumber'
+        meta:
+          type: object
+          description: Total count of available numbers
       required:
-      - sip_trunk_enabled
+      - api_id
+      - objects
+      - meta
     PhoneCountryRule:
       type: object
       properties:
@@ -745,6 +793,34 @@ components:
       - calling_code
       - prefixes
       - is_deleted
+    PurchasePhoneNumberRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: '+1234567890'
+          description: Phone number to purchase
+        telephonyProviderId:
+          type: string
+          example: plivo_123456
+          description: ID of telephony provider (14-char string)
+        countryISO:
+          type: string
+          example: US
+          description: Country ISO code (e.g., US, IN)
+      required:
+      - phoneNumber
+      - telephonyProviderId
+      - countryISO
+    OrganizationPhoneNumber:
+      type: object
+      properties:
+        sip_trunk_enabled:
+          type: boolean
+          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
+          default: false
+      required:
+      - sip_trunk_enabled
     ErrorResponse:
       type: object
       properties:
@@ -765,64 +841,6 @@ components:
       - statusCode
       - message
       - error
-    PhoneNumberPricing:
-      type: object
-      properties:
-        telephony_provider_id:
-          type: string
-          example: tp_abc123xyz789
-        country_iso:
-          type: string
-          minLength: 2
-          maxLength: 3
-          example: IN
-        country_name:
-          type: string
-          example: India
-        credit_cost:
-          oneOf:
-          - type: number
-            format: double
-          - type: string
-          example: '500.0000'
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        telephonyProvider:
-          type: object
-          additionalProperties: true
-          description: Associated telephony provider metadata.
-      required:
-      - telephony_provider_id
-      - country_iso
-      - country_name
-      - credit_cost
-    PurchasePhoneNumberResponse:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-          example: '+1234567890'
-          description: Phone number
-        status:
-          type: string
-          enum:
-          - active
-          - pending
-          description: Status of the phone number
-        message:
-          type: string
-          description: Status message
-        organizationPhoneNumber:
-          description: Organization phone number record
-          allOf:
-          - $ref: '#/components/schemas/OrganizationPhoneNumber'
-      required:
-      - phoneNumber
-      - status
     LinkSipTrunkRequest:
       type: object
       properties:
@@ -853,24 +871,6 @@ components:
       required:
       - phoneNumber
       - terminationUri
-    AvailablePhoneNumbersResponse:
-      type: object
-      properties:
-        api_id:
-          type: string
-          description: API ID for the request
-        objects:
-          description: List of available phone numbers
-          type: array
-          items:
-            $ref: '#/components/schemas/AvailablePhoneNumber'
-        meta:
-          type: object
-          description: Total count of available numbers
-      required:
-      - api_id
-      - objects
-      - meta
     AvailablePhoneNumber:
       type: object
       properties:

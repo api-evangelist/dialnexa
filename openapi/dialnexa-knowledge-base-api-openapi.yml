@@ -368,15 +368,25 @@ paths:
       description: Returns one knowledge base owned by the authenticated workspace.
 components:
   schemas:
-    CreateKnowledgeBaseRequest:
+    KnowledgeBase:
       type: object
       properties:
+        id:
+          type: string
+          example: kb_abc123
+          description: Signed knowledge base ID.
         name:
           type: string
-          description: Name of the knowledge base (must be unique within the workspace)
-          example: Product Documentation
+          example: Loan FAQ
           maxLength: 150
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
       required:
+      - id
       - name
     UpdateKnowledgeBaseRequest:
       type: object
@@ -405,25 +415,15 @@ components:
       - statusCode
       - message
       - error
-    KnowledgeBase:
+    CreateKnowledgeBaseRequest:
       type: object
       properties:
-        id:
-          type: string
-          example: kb_abc123
-          description: Signed knowledge base ID.
         name:
           type: string
-          example: Loan FAQ
+          description: Name of the knowledge base (must be unique within the workspace)
+          example: Product Documentation
           maxLength: 150
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
       required:
-      - id
       - name
   securitySchemes:
     bearer:

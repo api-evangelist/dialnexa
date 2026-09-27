@@ -596,6 +596,33 @@ paths:
       description: Returns one webhook registration; its signing secret is masked after creation.
 components:
   schemas:
+    CreateWebhookRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          example: https://webhook.site/your-endpoint
+          description: The URL to which webhook events will be sent.
+        events:
+          example:
+          - order.paid
+          - order.failed
+          description: List of events this webhook is subscribed to.
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+          example: true
+          description: Whether the webhook is active.
+        secret:
+          type: string
+          example: mySuperSecret
+          description: Secret used to sign webhook payloads.
+      required:
+      - url
+      - events
+      - secret
     ErrorResponse:
       type: object
       properties:
@@ -638,33 +665,6 @@ components:
           type: string
           example: newSecret
           description: New secret for signing payloads.
-    CreateWebhookRequest:
-      type: object
-      properties:
-        url:
-          type: string
-          example: https://webhook.site/your-endpoint
-          description: The URL to which webhook events will be sent.
-        events:
-          example:
-          - order.paid
-          - order.failed
-          description: List of events this webhook is subscribed to.
-          type: array
-          items:
-            type: string
-        is_active:
-          type: boolean
-          example: true
-          description: Whether the webhook is active.
-        secret:
-          type: string
-          example: mySuperSecret
-          description: Secret used to sign webhook payloads.
-      required:
-      - url
-      - events
-      - secret
   securitySchemes:
     bearer:
       scheme: bearer

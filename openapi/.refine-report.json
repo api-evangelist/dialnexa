@@ -18,9 +18,7 @@
     "dialnexa-workflow-leads-api-openapi.yml",
     "dialnexa-workflows-api-openapi.yml"
   ],
-  "archived": [
-    "deleted 1 superseded output(s) from the previous generation"
-  ],
+  "archived": [],
   "errors": [],
   "warnings": [],
   "notes": [
@@ -28,8 +26,7 @@
     "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
     "dialnexa-openapi.json: upgraded openapi 3.0.0 -> OpenAPI 3.2.0",
     "dialnexa-openapi.json: declared missing tag: Organization Folders",
-    "superseded outputs removed: dialnexa-ll-ms-api-openapi.yml",
-    "apis.yml register: written (+1 apis, 13 total)"
+    "apis.yml register: already-registered"
   ],
   "skipped": [
     "_original/dialnexa-api-openapi.yml: archived document superseded by a larger archived document",
@@ -38,7 +35,7 @@
     "dialnexa-calls-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "dialnexa-knowledge-base-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "dialnexa-languages-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-ll-ms-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "dialnexa-llms-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "dialnexa-organization-folders-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "dialnexa-phone-numbers-api-openapi.yml: previously refined output, superseded by openapi/_original/",
     "dialnexa-transcribers-api-openapi.yml: previously refined output, superseded by openapi/_original/",
