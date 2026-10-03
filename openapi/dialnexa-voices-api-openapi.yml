@@ -535,22 +535,26 @@ paths:
       description: Returns the languages supported by one voice.
 components:
   schemas:
-    SpeechToSpeechLanguage:
+    ErrorResponse:
       type: object
       properties:
-        id:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
           type: string
-          example: mj17k2hwviopty
-        name:
-          type: string
-          example: Hindi
-        code:
-          type: string
-          example: hi
+          example: Bad Request
       required:
-      - id
-      - name
-      - code
+      - statusCode
+      - message
+      - error
     SpeechToSpeechVoicesResponse:
       type: object
       properties:
@@ -614,26 +618,6 @@ components:
       - recording
       - languages
       - llms
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
     SpeechToSpeechModel:
       type: object
       properties:
@@ -654,6 +638,22 @@ components:
       - name
       - provider
       - provider_id
+    SpeechToSpeechLanguage:
+      type: object
+      properties:
+        id:
+          type: string
+          example: mj17k2hwviopty
+        name:
+          type: string
+          example: Hindi
+        code:
+          type: string
+          example: hi
+      required:
+      - id
+      - name
+      - code
   securitySchemes:
     bearer:
       scheme: bearer

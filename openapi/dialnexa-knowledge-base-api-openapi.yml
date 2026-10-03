@@ -395,6 +395,16 @@ components:
           type: string
           description: Name of the knowledge base
           example: Updated Product Documentation
+    CreateKnowledgeBaseRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the knowledge base (must be unique within the workspace)
+          example: Product Documentation
+          maxLength: 150
+      required:
+      - name
     ErrorResponse:
       type: object
       properties:
@@ -415,16 +425,6 @@ components:
       - statusCode
       - message
       - error
-    CreateKnowledgeBaseRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name of the knowledge base (must be unique within the workspace)
-          example: Product Documentation
-          maxLength: 150
-      required:
-      - name
   securitySchemes:
     bearer:
       scheme: bearer

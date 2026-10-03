@@ -638,29 +638,104 @@ paths:
       description: Returns one workspace phone number and its routing configuration.
 components:
   schemas:
-    PurchasePhoneNumberResponse:
+    OrganizationPhoneNumber:
+      type: object
+      properties:
+        sip_trunk_enabled:
+          type: boolean
+          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
+          default: false
+      required:
+      - sip_trunk_enabled
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    LinkSipTrunkRequest:
       type: object
       properties:
         phoneNumber:
           type: string
-          example: '+1234567890'
-          description: Phone number
-        status:
+          example: '+14155552671'
+          description: E.164 phone number
+        terminationUri:
+          type: string
+          example: 31974861099010243.zt.plivo.com:5060
+          description: 'SIP termination host[:port]; must not use a sip: URI prefix'
+        authMode:
           type: string
           enum:
-          - active
-          - pending
-          description: Status of the phone number
-        message:
+          - userpass
+          - ip
+          default: userpass
+          description: How the SIP provider authorizes the trunk. userpass requires sipTrunkUserName and sipTrunkPassword. ip requires both credentials to be omitted and the provider to allowlist the DialNexa signaling IP.
+        sipTrunkUserName:
           type: string
-          description: Status message
-        organizationPhoneNumber:
-          description: Organization phone number record
-          allOf:
-          - $ref: '#/components/schemas/OrganizationPhoneNumber'
+          description: SIP authentication username. Required for authMode=userpass and forbidden for authMode=ip.
+        sipTrunkPassword:
+          type: string
+          description: SIP authentication password stored encrypted. Required for authMode=userpass and forbidden for authMode=ip.
+        nickname:
+          type: string
+          description: Display nickname for this trunk
       required:
       - phoneNumber
-      - status
+      - terminationUri
+    PhoneCountryRule:
+      type: object
+      properties:
+        id:
+          type: string
+          example: pcr_abc123xyz789
+        country_iso:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: IN
+        country_name:
+          type: string
+          example: India
+        calling_code:
+          type: string
+          example: '91'
+        max_length:
+          type:
+          - integer
+          - 'null'
+          example: 10
+        prefixes:
+          type: array
+          items:
+            type: string
+          example:
+          - '98'
+          - '99'
+        is_deleted:
+          type: boolean
+          example: false
+      required:
+      - id
+      - country_iso
+      - country_name
+      - calling_code
+      - prefixes
+      - is_deleted
     PhoneNumberPricing:
       type: object
       properties:
@@ -736,63 +811,29 @@ components:
       - prefix_mode
       - from_phone_number_country_code
       - countryRule
-    AvailablePhoneNumbersResponse:
+    PurchasePhoneNumberResponse:
       type: object
       properties:
-        api_id:
+        phoneNumber:
           type: string
-          description: API ID for the request
-        objects:
-          description: List of available phone numbers
-          type: array
-          items:
-            $ref: '#/components/schemas/AvailablePhoneNumber'
-        meta:
-          type: object
-          description: Total count of available numbers
+          example: '+1234567890'
+          description: Phone number
+        status:
+          type: string
+          enum:
+          - active
+          - pending
+          description: Status of the phone number
+        message:
+          type: string
+          description: Status message
+        organizationPhoneNumber:
+          description: Organization phone number record
+          allOf:
+          - $ref: '#/components/schemas/OrganizationPhoneNumber'
       required:
-      - api_id
-      - objects
-      - meta
-    PhoneCountryRule:
-      type: object
-      properties:
-        id:
-          type: string
-          example: pcr_abc123xyz789
-        country_iso:
-          type: string
-          minLength: 2
-          maxLength: 2
-          example: IN
-        country_name:
-          type: string
-          example: India
-        calling_code:
-          type: string
-          example: '91'
-        max_length:
-          type:
-          - integer
-          - 'null'
-          example: 10
-        prefixes:
-          type: array
-          items:
-            type: string
-          example:
-          - '98'
-          - '99'
-        is_deleted:
-          type: boolean
-          example: false
-      required:
-      - id
-      - country_iso
-      - country_name
-      - calling_code
-      - prefixes
-      - is_deleted
+      - phoneNumber
+      - status
     PurchasePhoneNumberRequest:
       type: object
       properties:
@@ -812,65 +853,24 @@ components:
       - phoneNumber
       - telephonyProviderId
       - countryISO
-    OrganizationPhoneNumber:
+    AvailablePhoneNumbersResponse:
       type: object
       properties:
-        sip_trunk_enabled:
-          type: boolean
-          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
-          default: false
+        api_id:
+          type: string
+          description: API ID for the request
+        objects:
+          description: List of available phone numbers
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailablePhoneNumber'
+        meta:
+          type: object
+          description: Total count of available numbers
       required:
-      - sip_trunk_enabled
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
-    LinkSipTrunkRequest:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-          example: '+14155552671'
-          description: E.164 phone number
-        terminationUri:
-          type: string
-          example: 31974861099010243.zt.plivo.com:5060
-          description: 'SIP termination host[:port]; must not use a sip: URI prefix'
-        authMode:
-          type: string
-          enum:
-          - userpass
-          - ip
-          default: userpass
-          description: How the SIP provider authorizes the trunk. userpass requires sipTrunkUserName and sipTrunkPassword. ip requires both credentials to be omitted and the provider to allowlist the DialNexa signaling IP.
-        sipTrunkUserName:
-          type: string
-          description: SIP authentication username. Required for authMode=userpass and forbidden for authMode=ip.
-        sipTrunkPassword:
-          type: string
-          description: SIP authentication password stored encrypted. Required for authMode=userpass and forbidden for authMode=ip.
-        nickname:
-          type: string
-          description: Display nickname for this trunk
-      required:
-      - phoneNumber
-      - terminationUri
+      - api_id
+      - objects
+      - meta
     AvailablePhoneNumber:
       type: object
       properties:

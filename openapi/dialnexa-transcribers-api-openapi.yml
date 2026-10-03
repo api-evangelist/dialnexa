@@ -226,6 +226,15 @@ paths:
       description: Returns one speech-to-text transcriber catalog record by ID.
 components:
   schemas:
+    Transcriber:
+      type: object
+      properties:
+        id:
+          type: string
+          example: trs_abc123
+          description: Signed transcriber ID
+      required:
+      - id
     ErrorResponse:
       type: object
       properties:
@@ -246,15 +255,6 @@ components:
       - statusCode
       - message
       - error
-    Transcriber:
-      type: object
-      properties:
-        id:
-          type: string
-          example: trs_abc123
-          description: Signed transcriber ID
-      required:
-      - id
   securitySchemes:
     bearer:
       scheme: bearer
