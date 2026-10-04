@@ -596,6 +596,48 @@ paths:
       description: Returns one webhook registration; its signing secret is masked after creation.
 components:
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    UpdateWebhookRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          example: https://webhook.site/updated-endpoint
+          description: The new URL for the webhook.
+        events:
+          example:
+          - order.paid
+          description: Updated list of events.
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+          example: false
+          description: Whether the webhook is active.
+        secret:
+          type: string
+          example: newSecret
+          description: New secret for signing payloads.
     CreateWebhookRequest:
       type: object
       properties:
@@ -623,48 +665,6 @@ components:
       - url
       - events
       - secret
-    UpdateWebhookRequest:
-      type: object
-      properties:
-        url:
-          type: string
-          example: https://webhook.site/updated-endpoint
-          description: The new URL for the webhook.
-        events:
-          example:
-          - order.paid
-          description: Updated list of events.
-          type: array
-          items:
-            type: string
-        is_active:
-          type: boolean
-          example: false
-          description: Whether the webhook is active.
-        secret:
-          type: string
-          example: newSecret
-          description: New secret for signing payloads.
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
   securitySchemes:
     bearer:
       scheme: bearer

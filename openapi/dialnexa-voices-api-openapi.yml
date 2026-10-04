@@ -555,15 +555,26 @@ components:
       - statusCode
       - message
       - error
-    SpeechToSpeechVoicesResponse:
+    SpeechToSpeechModel:
       type: object
       properties:
-        voices:
-          type: array
-          items:
-            $ref: '#/components/schemas/SpeechToSpeechVoice'
+        id:
+          type: string
+          example: llm_abc123456789
+        name:
+          type: string
+          example: GPT Realtime 2
+        provider:
+          type: string
+          example: openai
+        provider_id:
+          type: string
+          example: gpt-realtime-2
       required:
-      - voices
+      - id
+      - name
+      - provider
+      - provider_id
     SpeechToSpeechVoice:
       type: object
       properties:
@@ -618,26 +629,15 @@ components:
       - recording
       - languages
       - llms
-    SpeechToSpeechModel:
+    SpeechToSpeechVoicesResponse:
       type: object
       properties:
-        id:
-          type: string
-          example: llm_abc123456789
-        name:
-          type: string
-          example: GPT Realtime 2
-        provider:
-          type: string
-          example: openai
-        provider_id:
-          type: string
-          example: gpt-realtime-2
+        voices:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeechToSpeechVoice'
       required:
-      - id
-      - name
-      - provider
-      - provider_id
+      - voices
     SpeechToSpeechLanguage:
       type: object
       properties:

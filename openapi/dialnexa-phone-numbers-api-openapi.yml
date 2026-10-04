@@ -638,15 +638,6 @@ paths:
       description: Returns one workspace phone number and its routing configuration.
 components:
   schemas:
-    OrganizationPhoneNumber:
-      type: object
-      properties:
-        sip_trunk_enabled:
-          type: boolean
-          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
-          default: false
-      required:
-      - sip_trunk_enabled
     ErrorResponse:
       type: object
       properties:
@@ -667,36 +658,24 @@ components:
       - statusCode
       - message
       - error
-    LinkSipTrunkRequest:
+    AvailablePhoneNumbersResponse:
       type: object
       properties:
-        phoneNumber:
+        api_id:
           type: string
-          example: '+14155552671'
-          description: E.164 phone number
-        terminationUri:
-          type: string
-          example: 31974861099010243.zt.plivo.com:5060
-          description: 'SIP termination host[:port]; must not use a sip: URI prefix'
-        authMode:
-          type: string
-          enum:
-          - userpass
-          - ip
-          default: userpass
-          description: How the SIP provider authorizes the trunk. userpass requires sipTrunkUserName and sipTrunkPassword. ip requires both credentials to be omitted and the provider to allowlist the DialNexa signaling IP.
-        sipTrunkUserName:
-          type: string
-          description: SIP authentication username. Required for authMode=userpass and forbidden for authMode=ip.
-        sipTrunkPassword:
-          type: string
-          description: SIP authentication password stored encrypted. Required for authMode=userpass and forbidden for authMode=ip.
-        nickname:
-          type: string
-          description: Display nickname for this trunk
+          description: API ID for the request
+        objects:
+          description: List of available phone numbers
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailablePhoneNumber'
+        meta:
+          type: object
+          description: Total count of available numbers
       required:
-      - phoneNumber
-      - terminationUri
+      - api_id
+      - objects
+      - meta
     PhoneCountryRule:
       type: object
       properties:
@@ -736,6 +715,57 @@ components:
       - calling_code
       - prefixes
       - is_deleted
+    PurchasePhoneNumberResponse:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: '+1234567890'
+          description: Phone number
+        status:
+          type: string
+          enum:
+          - active
+          - pending
+          description: Status of the phone number
+        message:
+          type: string
+          description: Status message
+        organizationPhoneNumber:
+          description: Organization phone number record
+          allOf:
+          - $ref: '#/components/schemas/OrganizationPhoneNumber'
+      required:
+      - phoneNumber
+      - status
+    OrganizationPhoneNumber:
+      type: object
+      properties:
+        sip_trunk_enabled:
+          type: boolean
+          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
+          default: false
+      required:
+      - sip_trunk_enabled
+    PurchasePhoneNumberRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: '+1234567890'
+          description: Phone number to purchase
+        telephonyProviderId:
+          type: string
+          example: plivo_123456
+          description: ID of telephony provider (14-char string)
+        countryISO:
+          type: string
+          example: US
+          description: Country ISO code (e.g., US, IN)
+      required:
+      - phoneNumber
+      - telephonyProviderId
+      - countryISO
     PhoneNumberPricing:
       type: object
       properties:
@@ -771,106 +801,6 @@ components:
       - country_iso
       - country_name
       - credit_cost
-    EnabledTelephonyNetworkGroup:
-      type: object
-      properties:
-        prefix_mode:
-          type: string
-          enum:
-          - allow_only_listed
-        from_phone_number_country_code:
-          type:
-          - string
-          - 'null'
-          example: null
-        countryRule:
-          type: object
-          properties:
-            country_iso:
-              type: string
-              example: IN
-            country_name:
-              type: string
-              example: India Mobile
-            calling_code:
-              type: string
-              example: '91'
-            prefixes:
-              type: array
-              items:
-                type: string
-              example:
-              - '98'
-              - '99'
-          required:
-          - country_iso
-          - country_name
-          - calling_code
-          - prefixes
-      required:
-      - prefix_mode
-      - from_phone_number_country_code
-      - countryRule
-    PurchasePhoneNumberResponse:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-          example: '+1234567890'
-          description: Phone number
-        status:
-          type: string
-          enum:
-          - active
-          - pending
-          description: Status of the phone number
-        message:
-          type: string
-          description: Status message
-        organizationPhoneNumber:
-          description: Organization phone number record
-          allOf:
-          - $ref: '#/components/schemas/OrganizationPhoneNumber'
-      required:
-      - phoneNumber
-      - status
-    PurchasePhoneNumberRequest:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-          example: '+1234567890'
-          description: Phone number to purchase
-        telephonyProviderId:
-          type: string
-          example: plivo_123456
-          description: ID of telephony provider (14-char string)
-        countryISO:
-          type: string
-          example: US
-          description: Country ISO code (e.g., US, IN)
-      required:
-      - phoneNumber
-      - telephonyProviderId
-      - countryISO
-    AvailablePhoneNumbersResponse:
-      type: object
-      properties:
-        api_id:
-          type: string
-          description: API ID for the request
-        objects:
-          description: List of available phone numbers
-          type: array
-          items:
-            $ref: '#/components/schemas/AvailablePhoneNumber'
-        meta:
-          type: object
-          description: Total count of available numbers
-      required:
-      - api_id
-      - objects
-      - meta
     AvailablePhoneNumber:
       type: object
       properties:
@@ -911,6 +841,76 @@ components:
       - mms_enabled
       - country_iso
       - number_format
+    LinkSipTrunkRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: '+14155552671'
+          description: E.164 phone number
+        terminationUri:
+          type: string
+          example: 31974861099010243.zt.plivo.com:5060
+          description: 'SIP termination host[:port]; must not use a sip: URI prefix'
+        authMode:
+          type: string
+          enum:
+          - userpass
+          - ip
+          default: userpass
+          description: How the SIP provider authorizes the trunk. userpass requires sipTrunkUserName and sipTrunkPassword. ip requires both credentials to be omitted and the provider to allowlist the DialNexa signaling IP.
+        sipTrunkUserName:
+          type: string
+          description: SIP authentication username. Required for authMode=userpass and forbidden for authMode=ip.
+        sipTrunkPassword:
+          type: string
+          description: SIP authentication password stored encrypted. Required for authMode=userpass and forbidden for authMode=ip.
+        nickname:
+          type: string
+          description: Display nickname for this trunk
+      required:
+      - phoneNumber
+      - terminationUri
+    EnabledTelephonyNetworkGroup:
+      type: object
+      properties:
+        prefix_mode:
+          type: string
+          enum:
+          - allow_only_listed
+        from_phone_number_country_code:
+          type:
+          - string
+          - 'null'
+          example: null
+        countryRule:
+          type: object
+          properties:
+            country_iso:
+              type: string
+              example: IN
+            country_name:
+              type: string
+              example: India Mobile
+            calling_code:
+              type: string
+              example: '91'
+            prefixes:
+              type: array
+              items:
+                type: string
+              example:
+              - '98'
+              - '99'
+          required:
+          - country_iso
+          - country_name
+          - calling_code
+          - prefixes
+      required:
+      - prefix_mode
+      - from_phone_number_country_code
+      - countryRule
   securitySchemes:
     bearer:
       scheme: bearer

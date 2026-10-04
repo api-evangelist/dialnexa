@@ -316,18 +316,6 @@ paths:
       description: Returns one large language model catalog record by ID.
 components:
   schemas:
-    Llm:
-      type: object
-      properties:
-        id:
-          type: string
-          example: llm_abc123
-          description: Signed LLM ID
-        supports_tool_calling:
-          type: boolean
-          description: Whether the model can be assigned to an agent that has tools or functions.
-      required:
-      - id
     ErrorResponse:
       type: object
       properties:
@@ -348,6 +336,18 @@ components:
       - statusCode
       - message
       - error
+    Llm:
+      type: object
+      properties:
+        id:
+          type: string
+          example: llm_abc123
+          description: Signed LLM ID
+        supports_tool_calling:
+          type: boolean
+          description: Whether the model can be assigned to an agent that has tools or functions.
+      required:
+      - id
   securitySchemes:
     bearer:
       scheme: bearer

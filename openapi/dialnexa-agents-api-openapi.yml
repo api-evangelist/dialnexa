@@ -973,6 +973,26 @@ paths:
       - Agents
 components:
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
     Agents:
       type: object
       properties:
@@ -1943,26 +1963,6 @@ components:
           additionalProperties: true
       required:
       - version_number
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
   securitySchemes:
     bearer:
       scheme: bearer
