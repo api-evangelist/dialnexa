@@ -26,7 +26,7 @@ deliveryModel:
   generated: '2026-08-28'
   method: derived
 created: '2026-08-21'
-modified: '2026-09-03'
+modified: '2026-10-06'
 specificationVersion: '0.23'
 tags:
 - Voice AI
@@ -258,6 +258,8 @@ apis:
   - type: Authentication
     url: authentication/dialnexa-auth.md
 common:
+- url: https://dialnexa.com/blogs/feed/
+  type: BlogRSS
 - type: DomainSecurity
   url: security/dialnexa-domain-security.yml
 - type: Authentication
