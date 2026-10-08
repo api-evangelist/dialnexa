@@ -37,3 +37,33 @@ pilot:
 notes: >-
   Speech-to-text, language model, voice synthesis, and telephony provider costs are billed
   separately from the core per-minute plan rates.
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - hybrid
+  - metered
+  units:
+  - compute
+  plans:
+  - name: Pay As You Go
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - compute
+    periods: []
+  - name: Growth
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - compute
+    periods: []
+  - name: Enterprise
+    access: other
+    model: metered
+    model_how: derived
+    units:
+    - compute
+    periods: []
