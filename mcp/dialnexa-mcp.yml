@@ -189,3 +189,18 @@ tools:
   names:
   - get_prompt_suggestions_for_agent
 tool_count: 97
+rfc9728:
+  endpoint: https://api.dialnexa.com/v1/mcp
+  metadata_url: https://api.dialnexa.com/.well-known/oauth-protected-resource
+  discovered_via: WWW-Authenticate resource_metadata on an anonymous POST initialize
+  fetched: '2026-09-25'
+  http_status: 200
+  content_type: application/json
+  document:
+    resource: https://api.dialnexa.com/v1/mcp
+    authorization_servers:
+    - https://api.dialnexa.com
+    scopes_supported:
+    - mcp:read
+    - mcp:write
+    - offline_access
