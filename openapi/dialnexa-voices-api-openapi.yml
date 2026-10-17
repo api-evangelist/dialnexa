@@ -535,26 +535,15 @@ paths:
       description: Returns the languages supported by one voice.
 components:
   schemas:
-    ErrorResponse:
+    SpeechToSpeechVoicesResponse:
       type: object
       properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
+        voices:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeechToSpeechVoice'
       required:
-      - statusCode
-      - message
-      - error
+      - voices
     SpeechToSpeechModel:
       type: object
       properties:
@@ -575,6 +564,22 @@ components:
       - name
       - provider
       - provider_id
+    SpeechToSpeechLanguage:
+      type: object
+      properties:
+        id:
+          type: string
+          example: mj17k2hwviopty
+        name:
+          type: string
+          example: Hindi
+        code:
+          type: string
+          example: hi
+      required:
+      - id
+      - name
+      - code
     SpeechToSpeechVoice:
       type: object
       properties:
@@ -629,31 +634,26 @@ components:
       - recording
       - languages
       - llms
-    SpeechToSpeechVoicesResponse:
+    ErrorResponse:
       type: object
       properties:
-        voices:
-          type: array
-          items:
-            $ref: '#/components/schemas/SpeechToSpeechVoice'
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
       required:
-      - voices
-    SpeechToSpeechLanguage:
-      type: object
-      properties:
-        id:
-          type: string
-          example: mj17k2hwviopty
-        name:
-          type: string
-          example: Hindi
-        code:
-          type: string
-          example: hi
-      required:
-      - id
-      - name
-      - code
+      - statusCode
+      - message
+      - error
   securitySchemes:
     bearer:
       scheme: bearer

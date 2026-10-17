@@ -638,209 +638,6 @@ paths:
       description: Returns one workspace phone number and its routing configuration.
 components:
   schemas:
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
-    AvailablePhoneNumbersResponse:
-      type: object
-      properties:
-        api_id:
-          type: string
-          description: API ID for the request
-        objects:
-          description: List of available phone numbers
-          type: array
-          items:
-            $ref: '#/components/schemas/AvailablePhoneNumber'
-        meta:
-          type: object
-          description: Total count of available numbers
-      required:
-      - api_id
-      - objects
-      - meta
-    PhoneCountryRule:
-      type: object
-      properties:
-        id:
-          type: string
-          example: pcr_abc123xyz789
-        country_iso:
-          type: string
-          minLength: 2
-          maxLength: 2
-          example: IN
-        country_name:
-          type: string
-          example: India
-        calling_code:
-          type: string
-          example: '91'
-        max_length:
-          type:
-          - integer
-          - 'null'
-          example: 10
-        prefixes:
-          type: array
-          items:
-            type: string
-          example:
-          - '98'
-          - '99'
-        is_deleted:
-          type: boolean
-          example: false
-      required:
-      - id
-      - country_iso
-      - country_name
-      - calling_code
-      - prefixes
-      - is_deleted
-    PurchasePhoneNumberResponse:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-          example: '+1234567890'
-          description: Phone number
-        status:
-          type: string
-          enum:
-          - active
-          - pending
-          description: Status of the phone number
-        message:
-          type: string
-          description: Status message
-        organizationPhoneNumber:
-          description: Organization phone number record
-          allOf:
-          - $ref: '#/components/schemas/OrganizationPhoneNumber'
-      required:
-      - phoneNumber
-      - status
-    OrganizationPhoneNumber:
-      type: object
-      properties:
-        sip_trunk_enabled:
-          type: boolean
-          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
-          default: false
-      required:
-      - sip_trunk_enabled
-    PurchasePhoneNumberRequest:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-          example: '+1234567890'
-          description: Phone number to purchase
-        telephonyProviderId:
-          type: string
-          example: plivo_123456
-          description: ID of telephony provider (14-char string)
-        countryISO:
-          type: string
-          example: US
-          description: Country ISO code (e.g., US, IN)
-      required:
-      - phoneNumber
-      - telephonyProviderId
-      - countryISO
-    PhoneNumberPricing:
-      type: object
-      properties:
-        telephony_provider_id:
-          type: string
-          example: tp_abc123xyz789
-        country_iso:
-          type: string
-          minLength: 2
-          maxLength: 3
-          example: IN
-        country_name:
-          type: string
-          example: India
-        credit_cost:
-          oneOf:
-          - type: number
-            format: double
-          - type: string
-          example: '500.0000'
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        telephonyProvider:
-          type: object
-          additionalProperties: true
-          description: Associated telephony provider metadata.
-      required:
-      - telephony_provider_id
-      - country_iso
-      - country_name
-      - credit_cost
-    AvailablePhoneNumber:
-      type: object
-      properties:
-        number:
-          type: string
-          description: The phone number
-        type:
-          type: string
-          description: The type of phone number (local, tollfree, etc.)
-        monthly_rental_rate:
-          type: string
-          description: The monthly rental rate for the phone number
-        setup_rate:
-          type: string
-          description: The setup fee for the phone number
-        voice_enabled:
-          type: boolean
-          description: Voice capability of the phone number
-        sms_enabled:
-          type: boolean
-          description: SMS capability of the phone number
-        mms_enabled:
-          type: boolean
-          description: MMS capability of the phone number
-        country_iso:
-          type: string
-          description: Country ISO code
-        number_format:
-          type: string
-          description: The number in international format
-      required:
-      - number
-      - type
-      - monthly_rental_rate
-      - setup_rate
-      - voice_enabled
-      - sms_enabled
-      - mms_enabled
-      - country_iso
-      - number_format
     LinkSipTrunkRequest:
       type: object
       properties:
@@ -871,6 +668,47 @@ components:
       required:
       - phoneNumber
       - terminationUri
+    PurchasePhoneNumberResponse:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: '+1234567890'
+          description: Phone number
+        status:
+          type: string
+          enum:
+          - active
+          - pending
+          description: Status of the phone number
+        message:
+          type: string
+          description: Status message
+        organizationPhoneNumber:
+          description: Organization phone number record
+          allOf:
+          - $ref: '#/components/schemas/OrganizationPhoneNumber'
+      required:
+      - phoneNumber
+      - status
+    AvailablePhoneNumbersResponse:
+      type: object
+      properties:
+        api_id:
+          type: string
+          description: API ID for the request
+        objects:
+          description: List of available phone numbers
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailablePhoneNumber'
+        meta:
+          type: object
+          description: Total count of available numbers
+      required:
+      - api_id
+      - objects
+      - meta
     EnabledTelephonyNetworkGroup:
       type: object
       properties:
@@ -911,6 +749,168 @@ components:
       - prefix_mode
       - from_phone_number_country_code
       - countryRule
+    AvailablePhoneNumber:
+      type: object
+      properties:
+        number:
+          type: string
+          description: The phone number
+        type:
+          type: string
+          description: The type of phone number (local, tollfree, etc.)
+        monthly_rental_rate:
+          type: string
+          description: The monthly rental rate for the phone number
+        setup_rate:
+          type: string
+          description: The setup fee for the phone number
+        voice_enabled:
+          type: boolean
+          description: Voice capability of the phone number
+        sms_enabled:
+          type: boolean
+          description: SMS capability of the phone number
+        mms_enabled:
+          type: boolean
+          description: MMS capability of the phone number
+        country_iso:
+          type: string
+          description: Country ISO code
+        number_format:
+          type: string
+          description: The number in international format
+      required:
+      - number
+      - type
+      - monthly_rental_rate
+      - setup_rate
+      - voice_enabled
+      - sms_enabled
+      - mms_enabled
+      - country_iso
+      - number_format
+    PurchasePhoneNumberRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: '+1234567890'
+          description: Phone number to purchase
+        telephonyProviderId:
+          type: string
+          example: plivo_123456
+          description: ID of telephony provider (14-char string)
+        countryISO:
+          type: string
+          example: US
+          description: Country ISO code (e.g., US, IN)
+      required:
+      - phoneNumber
+      - telephonyProviderId
+      - countryISO
+    PhoneCountryRule:
+      type: object
+      properties:
+        id:
+          type: string
+          example: pcr_abc123xyz789
+        country_iso:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: IN
+        country_name:
+          type: string
+          example: India
+        calling_code:
+          type: string
+          example: '91'
+        max_length:
+          type:
+          - integer
+          - 'null'
+          example: 10
+        prefixes:
+          type: array
+          items:
+            type: string
+          example:
+          - '98'
+          - '99'
+        is_deleted:
+          type: boolean
+          example: false
+      required:
+      - id
+      - country_iso
+      - country_name
+      - calling_code
+      - prefixes
+      - is_deleted
+    OrganizationPhoneNumber:
+      type: object
+      properties:
+        sip_trunk_enabled:
+          type: boolean
+          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
+          default: false
+      required:
+      - sip_trunk_enabled
+    PhoneNumberPricing:
+      type: object
+      properties:
+        telephony_provider_id:
+          type: string
+          example: tp_abc123xyz789
+        country_iso:
+          type: string
+          minLength: 2
+          maxLength: 3
+          example: IN
+        country_name:
+          type: string
+          example: India
+        credit_cost:
+          oneOf:
+          - type: number
+            format: double
+          - type: string
+          example: '500.0000'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        telephonyProvider:
+          type: object
+          additionalProperties: true
+          description: Associated telephony provider metadata.
+      required:
+      - telephony_provider_id
+      - country_iso
+      - country_name
+      - credit_cost
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
   securitySchemes:
     bearer:
       scheme: bearer

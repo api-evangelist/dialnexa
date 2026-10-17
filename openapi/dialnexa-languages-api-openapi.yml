@@ -174,6 +174,15 @@ paths:
       description: Returns one language catalog record by ID.
 components:
   schemas:
+    Languages:
+      type: object
+      properties:
+        id:
+          type: string
+          example: lang_abc123
+          description: Signed language ID
+      required:
+      - id
     ErrorResponse:
       type: object
       properties:
@@ -194,15 +203,6 @@ components:
       - statusCode
       - message
       - error
-    Languages:
-      type: object
-      properties:
-        id:
-          type: string
-          example: lang_abc123
-          description: Signed language ID
-      required:
-      - id
   securitySchemes:
     bearer:
       scheme: bearer

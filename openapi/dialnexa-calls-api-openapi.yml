@@ -513,35 +513,6 @@ components:
       - id
       - to_phone_number
       - agent_id
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
-    CallLogs:
-      type: object
-      properties:
-        id:
-          type: string
-          example: call_abc123
-          description: Signed call ID
-      required:
-      - id
     CreateCallRequest:
       type: object
       properties:
@@ -575,6 +546,35 @@ components:
       - phone_number
       - agent_id
       - metadata
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+    CallLogs:
+      type: object
+      properties:
+        id:
+          type: string
+          example: call_abc123
+          description: Signed call ID
+      required:
+      - id
   securitySchemes:
     bearer:
       scheme: bearer
