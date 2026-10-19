@@ -20,9 +20,36 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PhoneCountryRule'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PhoneCountryRule'
+                  timestamp:
+                    type: string
+                    format: date-time
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -44,15 +71,36 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EnabledTelephonyNetworkGroup'
-        '400':
-          description: Workspace context could not be resolved.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EnabledTelephonyNetworkGroup'
+                  timestamp:
+                    type: string
+                    format: date-time
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -65,6 +113,7 @@ paths:
       tags:
       - Phone Numbers
       description: Returns one combined destination rule per country enabled for the authenticated workspace.
+      parameters: []
   /v1/phone-number-pricing:
     get:
       operationId: listPhoneNumberPricing
@@ -74,9 +123,36 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PhoneNumberPricing'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PhoneNumberPricing'
+                  timestamp:
+                    type: string
+                    format: date-time
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -88,23 +164,49 @@ paths:
       summary: List Phone Number Pricing
       tags:
       - Phone Numbers
-      description: Returns phone number rental pricing by telephony provider and country.
+      description: Returns the phone number rental pricing reference catalog by telephony provider and country. A purchase is charged the rental rate in the workspace billing plan, not this credit_cost.
   /v1/organization-phone-numbers:
     get:
       operationId: listPhoneNumbers
       parameters:
-      - name: limit
-        required: false
-        in: query
-        schema:
-          example: 20
-          type: number
       - name: page
         required: false
         in: query
+        description: Page number, starting from 1.
         schema:
-          example: 1
+          minimum: 1
+          default: 1
           type: number
+      - name: limit
+        required: false
+        in: query
+        description: Results per page.
+        schema:
+          minimum: 1
+          default: 20
+          type: number
+      - name: sortBy
+        required: false
+        in: query
+        description: Field to sort by.
+        schema:
+          default: id
+          type: string
+          enum:
+          - id
+          - created_at
+          - updated_at
+          - status
+      - name: sortOrder
+        required: false
+        in: query
+        description: Sort direction.
+        schema:
+          default: ASC
+          type: string
+          enum:
+          - ASC
+          - DESC
       responses:
         '200':
           description: Phone numbers returned successfully.
@@ -112,42 +214,90 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
-                  items:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          example: phn_abc123
-                        phone_number:
-                          type: string
-                          example: '+919876543210'
-                        provider:
-                          type: string
-                        status:
-                          type: string
-                  total:
-                    type: number
-                  page:
-                    type: number
-                  limit:
-                    type: number
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          allOf:
+                          - $ref: '#/components/schemas/PhoneNumberRecord'
+                          - type: object
+                            properties:
+                              is_default:
+                                type: boolean
+                                description: Whether this is a DialNexa system default number. List rows only.
+                      meta:
+                        type: object
+                        properties:
+                          currentPage:
+                            type: integer
+                            example: 1
+                          itemsPerPage:
+                            type: integer
+                            example: 20
+                          hasMore:
+                            type: boolean
+                            description: True when a further page exists. No total is returned.
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    items:
-                    - id: phn_abc123
-                      phone_number: '+14155552671'
-                      provider: plivo
-                      status: active
-                      country_code: US
-                      nickname: US Sales Line
-                    total: 1
-                    page: 1
-                    limit: 20
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      items:
+                      - id: phn_mfk3p8z2c4v6bn
+                        phone_number: '9876543210'
+                        status: active
+                        country_iso: '91'
+                        telephony_provider_id: mh00mke5j83neo
+                        organization_id: o14XKPP84rt22g
+                        inbound_agent_id: null
+                        outbound_agent_id: agent_2g7Xy3tY53gRlp
+                        rental_start_date: '2026-09-17'
+                        rental_end_date: '2026-10-17'
+                        rental_status: active
+                        sip_trunk_enabled: false
+                        nickname: null
+                        is_deleted: false
+                        deleted_at: null
+                        deleted_by: null
+                        created_at: '2026-09-17T05:52:18.634Z'
+                        updated_at: '2026-09-17T05:52:18.634Z'
+                        is_default: true
+                      meta:
+                        currentPage: 1
+                        itemsPerPage: 20
+                        hasMore: false
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -159,8 +309,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -172,21 +325,38 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
+                    errors: []
+        '400':
+          description: page or limit is below 1 or not a whole number, or sortBy or sortOrder is outside its allowed values.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                error:
-                  summary: 403 Forbidden
+                limit:
+                  summary: limit below 1
                   value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: limit must not be less than 1
+                    errors:
+                    - limit must not be less than 1
+                sortOrder:
+                  summary: Unknown sortOrder
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: 'sortOrder must be one of the following values: ASC, DESC'
+                    errors:
+                    - 'sortOrder must be one of the following values: ASC, DESC'
       security:
       - bearer: []
       summary: List Phone Numbers
@@ -195,22 +365,30 @@ paths:
       description: Returns phone numbers owned by the authenticated workspace with pagination metadata.
   /v1/organization-phone-numbers/plivo-numbers:
     get:
-      description: Searches available Plivo phone numbers that match the supplied filters.
+      description: Searches available Plivo phone numbers that match the supplied filters. The response is Plivo's own search result, passed through unchanged.
       operationId: searchAvailablePhoneNumbers
       parameters:
       - name: country_iso
         required: true
         in: query
-        description: ISO country code (e.g., US, GB, CA)
+        description: ISO country code (e.g., IN, US, GB)
         schema:
-          example: US
+          example: IN
           type: string
       - name: type
         required: false
         in: query
-        description: Type of number (e.g., tollfree, local, mobile)
+        description: 'Number type: local, tollfree, or mobile. Defaults to tollfree.'
         schema:
           example: tollfree
+          type: string
+          default: tollfree
+      - name: region
+        required: false
+        in: query
+        description: City or state filter. For IN it is sent to Plivo as city (for example Mumbai, Bengaluru, Chennai). For Mumbai and Bengaluru (or Bangalore) only, a city search that returns no numbers is retried with the city's STD code as a number pattern. For other countries it is sent as region (for example California, Texas).
+        schema:
+          example: Mumbai
           type: string
       responses:
         '200':
@@ -218,37 +396,63 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AvailablePhoneNumbersResponse'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/AvailablePhoneNumbersResponse'
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    api_id: 9f6d7c
-                    objects:
-                    - number: '+14155552671'
-                      type: local
-                      monthly_rental_rate: '0.80'
-                      setup_rate: '0.00'
-                      voice_enabled: true
-                      sms_enabled: true
-                      mms_enabled: false
-                      country_iso: US
-                      number_format: '+14155552671'
-                    meta:
-                      total_count: 1
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      api_id: 9f6d7c
+                      objects:
+                      - number: '14155552671'
+                        type: local
+                        monthly_rental_rate: '0.80'
+                        setup_rate: '0.00'
+                        voice_enabled: true
+                        sms_enabled: true
+                        mms_enabled: false
+                        country_iso: US
+                        number_format: '14155552671'
+                      meta:
+                        total_count: 1
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '400':
-          description: country_iso is required.
+          description: 'Plivo rejected the number search. The message starts with "Failed to fetch phone numbers from Plivo: " followed by Plivo''s error, and the status code is Plivo''s own, so other 4xx codes are possible.'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 400 Bad Request
-                  value:
-                    statusCode: 400
-                    message: country_iso is required
-                    error: Bad Request
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -260,21 +464,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -286,8 +480,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
+                    errors: []
       security:
       - bearer: []
       summary: Search Plivo Numbers
@@ -295,7 +492,7 @@ paths:
       - Phone Numbers
   /v1/organization-phone-numbers/purchase:
     post:
-      description: Purchases the selected provider number and adds it to the authenticated workspace for routing.
+      description: Purchases the selected provider number (Plivo or Twilio, chosen by telephonyProviderId) and adds it to the authenticated workspace. The workspace KYC must be verified, and a Plivo number in IN needs a compliance ID mapped to the workspace by support. On a workspace with a billing plan, the wallet must hold the plan's rental rate for the provider and country; the first cycle is charged just after the number is set up.
       operationId: purchasePhoneNumber
       parameters: []
       requestBody:
@@ -308,27 +505,12 @@ paths:
               request:
                 summary: Purchase a phone number
                 value:
-                  phoneNumber: '+14155552671'
-                  telephonyProviderId: plivo_123456
+                  phoneNumber: '14155552671'
+                  telephonyProviderId: mh00mke5j83neo
                   countryISO: US
       responses:
-        '200':
-          description: Phone number purchase initiated and record created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PurchasePhoneNumberResponse'
-              examples:
-                success:
-                  summary: Successful response
-                  value:
-                    phoneNumber: '+1234567890'
-                    status: active
-                    message: string
-                    organizationPhoneNumber:
-                      sip_trunk_enabled: false
         '400':
-          description: Invalid request or failed to purchase
+          description: Invalid request body, unsupported telephonyProviderId, organization KYC not verified, no compliance ID mapped for an IN Plivo number, phone number rental not configured for the billing plan, insufficient wallet balance, the first rental would go over the monthly spend cap, or the number was bought but could not be set up.
           content:
             application/json:
               schema:
@@ -338,8 +520,22 @@ paths:
                   summary: 400 Bad Request
                   value:
                     statusCode: 400
-                    message: country_iso is required
-                    error: Bad Request
+                    error: true
+                    success: false
+                    data: []
+                    message: countryISO must be a 2-letter uppercase ISO code (e.g., US, IN)
+                    errors:
+                    - countryISO must be a 2-letter uppercase ISO code (e.g., US, IN)
+                spendCap:
+                  summary: Monthly spend cap
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: This purchase (₹500.00) would go over your monthly spend cap. Raise the cap in Billing → Balance alerts, or try again after the 1st.
+                    errors:
+                    - This purchase (₹500.00) would go over your monthly spend cap. Raise the cap in Billing → Balance alerts, or try again after the 1st.
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -351,21 +547,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -377,29 +563,100 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Error purchasing phone number: Invalid phone number or ISO code'
+                    errors: []
         '201':
-          description: Phone number purchased and registered successfully.
+          description: Purchase processed. Inspect the active or pending status and confirm the saved number before routing calls.
           content:
             application/json:
               examples:
                 success:
                   summary: Successful response
                   value:
-                    phoneNumber: '+14155552671'
-                    status: active
-                    message: Phone number purchased and registered successfully
-                    organizationPhoneNumber:
-                      id: phn_abc123
-                      phone_number: '+14155552671'
-                      provider: plivo
+                    success: true
+                    error: false
+                    statusCode: 201
+                    message: Success
+                    data:
+                      phoneNumber: '14155552671'
                       status: active
-                      country_code: US
-                      nickname: US Sales Line
+                      message: Phone number 14155552671 purchase request sent.
+                      organizationPhoneNumber:
+                        id: phn_mfk3p8z2c4v6bn
+                        phone_number: '4155552671'
+                        status: pending
+                        country_iso: '1'
+                        telephony_provider_id: mh00mke5j83neo
+                        organization_id: o14XKPP84rt22g
+                        inbound_agent_id: null
+                        outbound_agent_id: null
+                        rental_start_date: null
+                        rental_end_date: null
+                        rental_status: null
+                        sip_trunk_enabled: false
+                        nickname: null
+                        is_deleted: false
+                        deleted_at: null
+                        deleted_by: null
+                        created_at: '2026-09-17T05:52:18.634Z'
+                        updated_at: '2026-09-17T05:52:18.634Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
+              schema:
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: object
+                    required:
+                    - phoneNumber
+                    - status
+                    - message
+                    properties:
+                      phoneNumber:
+                        type: string
+                        description: The number as sent in the request.
+                      status:
+                        type: string
+                        enum:
+                        - active
+                        - pending
+                        description: Provider purchase status. pending means the provider is still verifying the number.
+                      message:
+                        type: string
+                        example: Phone number 14155552671 purchase request sent.
+                      organizationPhoneNumber:
+                        allOf:
+                        - $ref: '#/components/schemas/PhoneNumberRecord'
+                        description: The workspace phone number record as created. Its status is the stored default (pending) at creation; read the number again for its current status and rental dates.
+                  timestamp:
+                    type: string
+                    format: date-time
       security:
       - bearer: []
-      summary: Purchase Phone Number
+      summary: Buy Phone Number
       tags:
       - Phone Numbers
   /v1/organization-phone-numbers/sip-trunks:
@@ -431,12 +688,93 @@ paths:
                 success:
                   summary: Successful response
                   value:
-                    id: phn_abc123
-                    phone_number: '+14155552671'
-                    provider: plivo
-                    status: active
-                    country_code: US
-                    nickname: US BYOC Line
+                    success: true
+                    error: false
+                    statusCode: 201
+                    message: Success
+                    data:
+                      id: phn_mfk3p8z2c4v6bn
+                      country_iso: '1'
+                      phone_number: 4155552671
+                      termination_uri: 31974861099010243.zt.plivo.com:5060
+                      sip_trunk_enabled: true
+                      nickname: US BYOC Line
+                      auth_mode: userpass
+                      sip_username: sip-user
+                    timestamp: '2026-09-07T06:00:00.000Z'
+              schema:
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: object
+                    required:
+                    - id
+                    - country_iso
+                    - phone_number
+                    - termination_uri
+                    - sip_trunk_enabled
+                    - nickname
+                    - auth_mode
+                    - sip_username
+                    properties:
+                      id:
+                        type: string
+                        example: phn_mfk3p8z2c4v6bn
+                        description: Signed phone number ID.
+                      country_iso:
+                        type: string
+                        example: '1'
+                        description: Country calling code without the plus sign.
+                      phone_number:
+                        type: integer
+                        format: int64
+                        example: 4155552671
+                        description: National number without the calling code, as a JSON number.
+                      termination_uri:
+                        type: string
+                        example: 31974861099010243.zt.plivo.com:5060
+                      sip_trunk_enabled:
+                        type: boolean
+                        enum:
+                        - true
+                      nickname:
+                        type:
+                        - string
+                        - 'null'
+                      auth_mode:
+                        type: string
+                        enum:
+                        - userpass
+                        - ip
+                      sip_username:
+                        type:
+                        - string
+                        - 'null'
+                        description: null for authMode ip.
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Invalid number, termination host, authentication mode, or credential combination.
           content:
@@ -448,8 +786,12 @@ paths:
                   summary: 400 Bad Request
                   value:
                     statusCode: 400
-                    message: sipTrunkUserName and sipTrunkPassword are required when authMode=userpass
-                    error: Bad Request
+                    error: true
+                    success: false
+                    data: []
+                    message: sipTrunkUserName and sipTrunkPassword are required when authMode is userpass
+                    errors:
+                    - sipTrunkUserName and sipTrunkPassword are required when authMode is userpass
         '409':
           description: Phone number already registered
           content:
@@ -461,21 +803,17 @@ paths:
                   summary: 409 Conflict
                   value:
                     statusCode: 409
-                    message: Phone number already registered
-                    error: Conflict
+                    error: true
+                    success: false
+                    data: []
+                    message: This phone number is already registered for your organization
+                    errors: []
         '502':
-          description: SIP trunk registration failed
+          description: SIP trunk registration failed. Nothing is saved; retry or contact support.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 502 Bad Gateway
-                  value:
-                    statusCode: 502
-                    message: SIP trunk registration failed
-                    error: Bad Gateway
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -487,21 +825,27 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden - API key does not have access to this organization.
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
+        '500':
+          description: Internal server error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 error:
-                  summary: 403 Forbidden
+                  summary: 500 Internal Server Error
                   value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: Internal server error
+                    errors: []
       security:
       - bearer: []
       summary: Link SIP Trunk
@@ -510,7 +854,7 @@ paths:
       description: Registers a bring-your-own number with SIP trunk credentials for workspace routing.
   /v1/organization-phone-numbers/{id}:
     delete:
-      description: Deletes a workspace phone number, releases its provider rental or SIP connection, and prevents future DialNexa routing. The request is blocked if the number is the workspace default or is used by an active workflow.
+      description: Deletes a workspace phone number, releases its provider rental or SIP connection, unlinks it from its agents, and prevents future DialNexa routing. The request is blocked if the number is a system default, has live calls, is used by a batch that is running, paused, scheduled or waiting, or is used by an active workflow. If the provider rental or SIP trunk cannot be released, the request fails with 502 and the number is kept.
       operationId: deletePhoneNumber
       parameters:
       - name: id
@@ -518,23 +862,124 @@ paths:
         in: path
         description: Phone number ID
         schema:
-          example: phn_abc123
+          example: phn_mfk3p8z2c4v6bn
           type: string
       responses:
         '200':
-          description: Phone number deleted successfully.
-        '400':
-          description: Invalid phone number ID format.
+          description: Phone number deleted successfully. data is the number 200.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: integer
+                    enum:
+                    - 200
+                  timestamp:
+                    type: string
+                    format: date-time
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data: 200
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
-        '403':
-          description: Forbidden - phone number does not belong to your organization.
         '404':
           description: Phone number not found.
         '409':
-          description: Conflict - phone number is the organization default or has active workflows.
+          description: 'Conflict: the number is a system default, has live calls (PHONE_NUMBER_HAS_LIVE_CALLS), is used by a batch that is running, paused, scheduled or waiting (NUMBER_USED_BY_BATCH), or is used by an active workflow (PHONE_NUMBER_USED_IN_ACTIVE_WORKFLOWS).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                numberUsedByBatch:
+                  summary: Number used by an unfinished batch
+                  value:
+                    statusCode: 409
+                    error: true
+                    success: false
+                    data:
+                      code: NUMBER_USED_BY_BATCH
+                      batches:
+                      - id: batch_mfh2k9x7q1w3er
+                        title: July renewals
+                        status: running
+                      live_calls: 0
+                    message: 1 unfinished batch(es) ("July renewals") and 0 live call(s) use this number. Change the batches' number or cancel them first.
+                    errors: []
+                phoneNumberHasLiveCalls:
+                  summary: Calls in progress on the number
+                  value:
+                    statusCode: 409
+                    error: true
+                    success: false
+                    data:
+                      code: PHONE_NUMBER_HAS_LIVE_CALLS
+                      live_calls: 2
+                      batches: []
+                    message: 2 call(s) are in progress on this number. Wait for them to finish, then retry.
+                    errors: []
+                phoneNumberUsedInActiveWorkflows:
+                  summary: Number used by an active workflow
+                  value:
+                    statusCode: 409
+                    error: true
+                    success: false
+                    data:
+                      code: PHONE_NUMBER_USED_IN_ACTIVE_WORKFLOWS
+                      affected_workflows:
+                      - id: mfk3p8z2c4v6bn
+                        title: Lead follow-up
+                        status: active
+                    message: This phone number is used in 1 active workflow(s). Pause those workflows first, then retry.
+                    errors: []
         '500':
           description: Internal server error.
+        '502':
+          description: The telephony provider did not release the number, the provider does not support release, or DialNexa could not remove the SIP trunk. The number is not deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                providerReleaseFailed:
+                  summary: Provider release failed
+                  value:
+                    statusCode: 502
+                    error: true
+                    success: false
+                    data: []
+                    message: Could not release the phone number with the telephony provider. Try again or contact support.
+                    errors: []
       security:
       - bearer: []
       summary: Delete Phone Number
@@ -548,7 +993,7 @@ paths:
         in: path
         description: Phone number ID
         schema:
-          example: phn_abc123
+          example: phn_mfk3p8z2c4v6bn
           type: string
       responses:
         '200':
@@ -557,27 +1002,61 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
-                  id:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
                     type: string
-                    example: phn_abc123
-                  phone_number:
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/PhoneNumberRecord'
+                  timestamp:
                     type: string
-                    example: '+919876543210'
-                  provider:
-                    type: string
-                  status:
-                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: phn_abc123
-                    phone_number: '+14155552671'
-                    provider: plivo
-                    status: active
-                    country_code: US
-                    nickname: US Sales Line
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      id: phn_mfk3p8z2c4v6bn
+                      phone_number: '9876543210'
+                      status: active
+                      country_iso: '91'
+                      telephony_provider_id: mh00mke5j83neo
+                      organization_id: o14XKPP84rt22g
+                      inbound_agent_id: null
+                      outbound_agent_id: agent_2g7Xy3tY53gRlp
+                      rental_start_date: '2026-09-17'
+                      rental_end_date: '2026-10-17'
+                      rental_status: active
+                      sip_trunk_enabled: false
+                      nickname: null
+                      is_deleted: false
+                      deleted_at: null
+                      deleted_by: null
+                      created_at: '2026-09-17T05:52:18.634Z'
+                      updated_at: '2026-09-17T05:52:18.634Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -589,8 +1068,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Phone number not found.
           content:
@@ -602,8 +1084,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Phone number not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Failed to fetch phone number: Phone number not found or does not belong to your organization'
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -615,21 +1100,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - phone number does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    errors: []
       security:
       - bearer: []
       summary: Get Phone Number Details
@@ -638,59 +1113,6 @@ paths:
       description: Returns one workspace phone number and its routing configuration.
 components:
   schemas:
-    LinkSipTrunkRequest:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-          example: '+14155552671'
-          description: E.164 phone number
-        terminationUri:
-          type: string
-          example: 31974861099010243.zt.plivo.com:5060
-          description: 'SIP termination host[:port]; must not use a sip: URI prefix'
-        authMode:
-          type: string
-          enum:
-          - userpass
-          - ip
-          default: userpass
-          description: How the SIP provider authorizes the trunk. userpass requires sipTrunkUserName and sipTrunkPassword. ip requires both credentials to be omitted and the provider to allowlist the DialNexa signaling IP.
-        sipTrunkUserName:
-          type: string
-          description: SIP authentication username. Required for authMode=userpass and forbidden for authMode=ip.
-        sipTrunkPassword:
-          type: string
-          description: SIP authentication password stored encrypted. Required for authMode=userpass and forbidden for authMode=ip.
-        nickname:
-          type: string
-          description: Display nickname for this trunk
-      required:
-      - phoneNumber
-      - terminationUri
-    PurchasePhoneNumberResponse:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-          example: '+1234567890'
-          description: Phone number
-        status:
-          type: string
-          enum:
-          - active
-          - pending
-          description: Status of the phone number
-        message:
-          type: string
-          description: Status message
-        organizationPhoneNumber:
-          description: Organization phone number record
-          allOf:
-          - $ref: '#/components/schemas/OrganizationPhoneNumber'
-      required:
-      - phoneNumber
-      - status
     AvailablePhoneNumbersResponse:
       type: object
       properties:
@@ -705,115 +1127,21 @@ components:
         meta:
           type: object
           description: Total count of available numbers
+        error:
+          type: string
+          description: Absent from the response when numbers are found. When Plivo has no numbers for the filters, its explanation, for example We are currently unable to offer your requested numbers; the status is still 200, objects is empty and meta.total_count is 0.
+          example: We are currently unable to offer your requested numbers
       required:
       - api_id
       - objects
       - meta
-    EnabledTelephonyNetworkGroup:
-      type: object
-      properties:
-        prefix_mode:
-          type: string
-          enum:
-          - allow_only_listed
-        from_phone_number_country_code:
-          type:
-          - string
-          - 'null'
-          example: null
-        countryRule:
-          type: object
-          properties:
-            country_iso:
-              type: string
-              example: IN
-            country_name:
-              type: string
-              example: India Mobile
-            calling_code:
-              type: string
-              example: '91'
-            prefixes:
-              type: array
-              items:
-                type: string
-              example:
-              - '98'
-              - '99'
-          required:
-          - country_iso
-          - country_name
-          - calling_code
-          - prefixes
-      required:
-      - prefix_mode
-      - from_phone_number_country_code
-      - countryRule
-    AvailablePhoneNumber:
-      type: object
-      properties:
-        number:
-          type: string
-          description: The phone number
-        type:
-          type: string
-          description: The type of phone number (local, tollfree, etc.)
-        monthly_rental_rate:
-          type: string
-          description: The monthly rental rate for the phone number
-        setup_rate:
-          type: string
-          description: The setup fee for the phone number
-        voice_enabled:
-          type: boolean
-          description: Voice capability of the phone number
-        sms_enabled:
-          type: boolean
-          description: SMS capability of the phone number
-        mms_enabled:
-          type: boolean
-          description: MMS capability of the phone number
-        country_iso:
-          type: string
-          description: Country ISO code
-        number_format:
-          type: string
-          description: The number in international format
-      required:
-      - number
-      - type
-      - monthly_rental_rate
-      - setup_rate
-      - voice_enabled
-      - sms_enabled
-      - mms_enabled
-      - country_iso
-      - number_format
-    PurchasePhoneNumberRequest:
-      type: object
-      properties:
-        phoneNumber:
-          type: string
-          example: '+1234567890'
-          description: Phone number to purchase
-        telephonyProviderId:
-          type: string
-          example: plivo_123456
-          description: ID of telephony provider (14-char string)
-        countryISO:
-          type: string
-          example: US
-          description: Country ISO code (e.g., US, IN)
-      required:
-      - phoneNumber
-      - telephonyProviderId
-      - countryISO
+      description: Plivo's search response, passed through unchanged. Plivo can include fields beyond those listed here.
     PhoneCountryRule:
       type: object
       properties:
         id:
           type: string
-          example: pcr_abc123xyz789
+          example: c7r2n5x8q1w4zt
         country_iso:
           type: string
           minLength: 2
@@ -840,6 +1168,12 @@ components:
         is_deleted:
           type: boolean
           example: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
       required:
       - id
       - country_iso
@@ -847,21 +1181,210 @@ components:
       - calling_code
       - prefixes
       - is_deleted
-    OrganizationPhoneNumber:
+    EnabledTelephonyNetworkGroup:
       type: object
       properties:
-        sip_trunk_enabled:
-          type: boolean
-          description: When true, Speech IO uses SIP trunking (e.g. asterisk) for this number.
-          default: false
+        prefix_mode:
+          type: string
+          enum:
+          - allow_only_listed
+        from_phone_number_country_code:
+          type:
+          - string
+          - 'null'
+          example: null
+        countryRule:
+          type: object
+          properties:
+            country_iso:
+              type: string
+              example: IN
+            country_name:
+              type: string
+              example: India Mobile
+              description: Name of the first enabled network group for the country, for example India Mobile. Not the country name.
+            calling_code:
+              type: string
+              example: '91'
+            prefixes:
+              type: array
+              items:
+                type: string
+              example:
+              - '98'
+              - '99'
+          required:
+          - country_iso
+          - country_name
+          - calling_code
+          - prefixes
       required:
-      - sip_trunk_enabled
+      - prefix_mode
+      - from_phone_number_country_code
+      - countryRule
+    ErrorResponse:
+      type: object
+      description: Error body on endpoints without response filtering.
+      properties:
+        statusCode:
+          type: integer
+          example: 404
+        error:
+          type: boolean
+          enum:
+          - true
+        success:
+          type: boolean
+          enum:
+          - false
+        data:
+          oneOf:
+          - type: object
+            properties:
+              code:
+                type: string
+                description: Machine-readable refusal code.
+          - type: array
+            items: {}
+          description: For a coded refusal, an object with code and the details listed for that code. Otherwise an empty array.
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation messages for a 400. Empty for other errors.
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
+      required:
+      - statusCode
+      - error
+      - success
+      - data
+      - message
+      - errors
+    AvailablePhoneNumber:
+      type: object
+      properties:
+        number:
+          type: string
+          description: The phone number, digits only, without a plus sign.
+        type:
+          type: string
+          description: The type of phone number (local, tollfree, etc.)
+        monthly_rental_rate:
+          type: string
+          description: The monthly rental rate for the phone number
+        setup_rate:
+          type: string
+          description: The setup fee for the phone number
+        voice_enabled:
+          type: boolean
+          description: Voice capability of the phone number
+        sms_enabled:
+          type: boolean
+          description: SMS capability of the phone number
+        mms_enabled:
+          type: boolean
+          description: MMS capability of the phone number
+        country_iso:
+          type: string
+          description: Country ISO code
+        number_format:
+          type: string
+          description: The number as Plivo formats it.
+      required:
+      - number
+      - type
+      - monthly_rental_rate
+      - setup_rate
+      - voice_enabled
+      - sms_enabled
+      - mms_enabled
+      - country_iso
+      - number_format
+    LinkSipTrunkRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          maxLength: 32
+          example: '+14155552671'
+          description: Phone number in E.164 form with the leading plus, for example +14155552671. It must be a valid number for its country.
+        terminationUri:
+          type: string
+          maxLength: 2048
+          example: 31974861099010243.zt.plivo.com:5060
+          description: 'SIP termination host[:port]; must not use a sip: URI prefix'
+        authMode:
+          enum:
+          - userpass
+          - ip
+          type: string
+          default: userpass
+          description: How the provider authorizes this trunk. 'userpass' requires sipTrunkUserName and sipTrunkPassword; 'ip' requires both to be omitted and expects the provider to have whitelisted our signaling IP.
+        sipTrunkUserName:
+          type: string
+          maxLength: 512
+          description: SIP authentication username. Required for authMode=userpass, forbidden for ip.
+        sipTrunkPassword:
+          type: string
+          maxLength: 512
+          description: SIP authentication password stored encrypted. Required for authMode=userpass and forbidden for authMode=ip.
+        nickname:
+          type: string
+          maxLength: 255
+          description: Display nickname for this trunk
+      required:
+      - phoneNumber
+      - terminationUri
+    PurchasePhoneNumberRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          pattern: ^\+?[1-9]\d{5,14}$
+          example: '+12025551234'
+          description: 'Phone number to purchase: country code followed by the subscriber number, digits only, with or without a leading plus sign. Both +12025551234 and 12025551234 are accepted.'
+        telephonyProviderId:
+          type: string
+          example: mh00mke5j83neo
+          description: ID of telephony provider (14-char string)
+        countryISO:
+          type: string
+          minLength: 2
+          maxLength: 2
+          pattern: ^[A-Z]{2}$
+          example: US
+          description: 'Uppercase two-letter country code of the number being bought, for example US. It must be the number''s own country: a mismatch fails with 500 after the provider step.'
+      required:
+      - phoneNumber
+      - telephonyProviderId
+      - countryISO
     PhoneNumberPricing:
       type: object
       properties:
         telephony_provider_id:
           type: string
-          example: tp_abc123xyz789
+          example: mh00mke5j83neo
         country_iso:
           type: string
           minLength: 2
@@ -871,11 +1394,9 @@ components:
           type: string
           example: India
         credit_cost:
-          oneOf:
-          - type: number
-            format: double
-          - type: string
+          type: string
           example: '500.0000'
+          description: Reference rental price as a decimal string with four decimal places.
         created_at:
           type: string
           format: date-time
@@ -891,26 +1412,94 @@ components:
       - country_iso
       - country_name
       - credit_cost
-    ErrorResponse:
+    PhoneNumberRecord:
       type: object
+      description: A phone number owned by the workspace, as stored. Returned by the list and get endpoints.
       properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
+        id:
           type: string
-          example: Bad Request
+          example: phn_mfk3p8z2c4v6bn
+          description: Signed phone number ID.
+        phone_number:
+          type: string
+          example: '9876543210'
+          pattern: ^[0-9]+$
+          description: National number without the country calling code or a plus sign, as a string of digits. Build the E.164 form as + followed by country_iso and phone_number.
+        status:
+          type: string
+          enum:
+          - pending
+          - active
+          description: Provisioning status of the number.
+        country_iso:
+          type: string
+          example: '91'
+          description: Country calling code without the plus sign, for example 91 or 1. This is not an ISO country code.
+        telephony_provider_id:
+          type: string
+          description: Telephony provider the number belongs to.
+        organization_id:
+          type: string
+          description: Owning organization.
+        inbound_agent_id:
+          type:
+          - string
+          - 'null'
+          description: Agent that answers inbound calls on this number, on its latest published version; null when none is linked.
+        outbound_agent_id:
+          type:
+          - string
+          - 'null'
+          description: Agent that can call from this number; null when none is linked.
+        rental_start_date:
+          type:
+          - string
+          - 'null'
+          format: date
+          example: '2026-09-17'
+        rental_end_date:
+          type:
+          - string
+          - 'null'
+          format: date
+          example: '2026-10-17'
+        rental_status:
+          type:
+          - string
+          - 'null'
+          enum:
+          - active
+          - expired
+          - available_for_reassignment
+        sip_trunk_enabled:
+          type: boolean
+          description: Whether a SIP trunk is linked to this number.
+        nickname:
+          type:
+          - string
+          - 'null'
+          description: Label set in the dashboard.
+        is_deleted:
+          type: boolean
+        deleted_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        deleted_by:
+          type:
+          - string
+          - 'null'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
       required:
-      - statusCode
-      - message
-      - error
+      - id
+      - phone_number
+      - status
   securitySchemes:
     bearer:
       scheme: bearer

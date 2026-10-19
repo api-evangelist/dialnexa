@@ -18,24 +18,28 @@ paths:
       - name: page
         required: false
         in: query
+        description: Page number, starting at 1. Must be a whole number; 0 or below is treated as 1.
         schema:
           example: 1
           type: number
       - name: limit
         required: false
         in: query
+        description: Models per page. Must be a whole number. Default 20; 0 also returns 20, values above 100 are treated as 100, and a negative value fails with 500.
         schema:
           example: 20
           type: number
       - name: sortBy
         required: false
         in: query
+        description: Column to sort by, for example id, name or provider. Default id. An unknown column returns 500.
         schema:
           example: id
           type: string
       - name: sortOrder
         required: false
         in: query
+        description: Sort direction. Default ASC.
         schema:
           enum:
           - ASC
@@ -49,73 +53,71 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Llm'
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: llm_mfgt5q2x8k4w7r
+                      description: Signed LLM ID
+                    name:
+                      type: string
+                    provider:
+                      enum:
+                      - google
+                      - openai
+                      - deepseek
+                      - groq
+                      - gemini
+                      - sarvam
+                      type: string
+                  required:
+                  - id
               examples:
                 success:
                   summary: Successful response
                   value:
-                  - id: llm_A1B2C3D4E5F6G7
+                  - id: llm_mfgt5q2x8k4w7r
                     name: GPT-4.1 Mini
                     provider: openai
-                    supports_structured_output: true
         '400':
           description: Bad request - invalid query parameters.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 400 Bad Request
                   value:
-                    statusCode: 400
-                    message: Invalid query parameters
-                    error: Bad Request
+                    message: 'Request validation failed: Validation failed (numeric string is expected)'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: List LLMs
       tags:
       - LLMs
-      description: Returns the complete catalog of large language models available for agent configuration.
+      description: Returns one page of the language models available as an agent's primary LLM. Defaults to 20 models per page; limits above 100 are capped at 100. The API-key response is a plain array without pagination metadata.
   /v1/llms/fallback:
     get:
       operationId: listFallbackLlms
@@ -123,24 +125,28 @@ paths:
       - name: page
         required: false
         in: query
+        description: Page number, starting at 1. Must be a whole number; 0 or below is treated as 1.
         schema:
           example: 1
           type: number
       - name: limit
         required: false
         in: query
+        description: Models per page. Must be a whole number. Default 20; 0 also returns 20, values above 100 are treated as 100, and a negative value fails with 500.
         schema:
           example: 20
           type: number
       - name: sortBy
         required: false
         in: query
+        description: Column to sort by, for example id, name or provider. Default id. An unknown column returns 500.
         schema:
           example: id
           type: string
       - name: sortOrder
         required: false
         in: query
+        description: Sort direction. Default ASC.
         schema:
           enum:
           - ASC
@@ -154,69 +160,71 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Llm'
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: llm_mfgt5q2x8k4w7r
+                      description: Signed LLM ID
+                    name:
+                      type: string
+                    provider:
+                      enum:
+                      - google
+                      - openai
+                      - deepseek
+                      - groq
+                      - gemini
+                      - sarvam
+                      type: string
+                  required:
+                  - id
               examples:
                 success:
                   summary: Successful response
-                  value: []
+                  value:
+                  - id: llm_mh2k7w9q4x1zpt
+                    name: Gemini 3.1 Flash Lite
+                    provider: gemini
         '400':
           description: Bad request - invalid query parameters.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 400 Bad Request
                   value:
-                    statusCode: 400
-                    message: Invalid query parameters
-                    error: Bad Request
+                    message: 'Request validation failed: Validation failed (numeric string is expected)'
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: List Fallback LLMs
       tags:
       - LLMs
-      description: Returns large language models that can be selected as fallback models.
+      description: Returns one page of eligible fallback language models. Defaults to 20 models per page; limits above 100 are capped at 100. The API-key response is a plain array without pagination metadata.
   /v1/llms/{id}:
     get:
       operationId: getLlm
@@ -226,7 +234,7 @@ paths:
         in: path
         description: LLM ID
         schema:
-          example: llm_abc123
+          example: llm_mfgt5q2x8k4w7r
           type: string
       responses:
         '200':
@@ -234,120 +242,108 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Llm'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: llm_mfgt5q2x8k4w7r
+                    description: Signed LLM ID
+                  name:
+                    type: string
+                  provider:
+                    enum:
+                    - google
+                    - openai
+                    - deepseek
+                    - groq
+                    - gemini
+                    - sarvam
+                    type: string
+                required:
+                - id
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: llm_A1B2C3D4E5F6G7
+                    id: llm_mfgt5q2x8k4w7r
                     name: GPT-4.1 Mini
                     provider: openai
-                    supports_structured_output: true
-        '400':
-          description: Invalid catalog ID format.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 400 Bad Request
-                  value:
-                    statusCode: 400
-                    message: Invalid catalog ID format
-                    error: Bad Request
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '404':
           description: LLM not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 404 Not Found
                   value:
-                    statusCode: 404
-                    message: LLM not found
-                    error: Not Found
+                    message: 'Could not find LLM with id: abc12345678901'
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: Get LLM Details
       tags:
       - LLMs
-      description: Returns one large language model catalog record by ID.
+      description: Returns one large language model catalog record by ID. It does not check primary or fallback eligibility, so a model returned here may not be accepted in that role.
 components:
   schemas:
-    Llm:
+    FilteredErrorResponse:
       type: object
+      description: Error body on calls, batch calls, voices, languages and LLMs, which return only the message (and data for a coded refusal).
       properties:
-        id:
-          type: string
-          example: llm_abc123
-          description: Signed LLM ID
-        supports_tool_calling:
-          type: boolean
-          description: Whether the model can be assigned to an agent that has tools or functions.
-      required:
-      - id
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
         message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
           type: string
-          example: Bad Request
+        data:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable refusal code.
+          description: 'Present for a coded refusal: code and the details listed for that code.'
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
       required:
-      - statusCode
       - message
-      - error
   securitySchemes:
     bearer:
       scheme: bearer

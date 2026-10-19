@@ -18,27 +18,34 @@ paths:
       - name: search
         required: false
         in: query
-        description: Case-insensitive folder name search.
+        description: Search by folder name
         schema:
+          example: Call
           type: string
-          example: Sales
       - name: page
         required: false
         in: query
-        description: Page number starting from 1.
+        description: Page number, starting from 1. Default 1. Read with parseInt, so 2.5 or 2abc is page 2; a value that does not start with a number, or is below 1, returns 400.
         schema:
-          type: integer
-          minimum: 1
-          default: 1
+          default: '1'
+          example: '1'
+          type: string
       - name: limit
         required: false
         in: query
-        description: Results per page. Maximum 50.
+        description: Folders per page, from 1 to 50. Default 20. Read with parseInt, so 10.5 is 10; a value that does not start with a number, or is outside 1 to 50, returns 400.
         schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 20
+          default: '20'
+          example: '20'
+          type: string
+      - name: export
+        required: false
+        in: query
+        description: 'Accepted for compatibility but ignored: results are always paginated.'
+        schema:
+          default: false
+          example: true
+          type: boolean
       responses:
         '200':
           description: Organization folders returned successfully.
@@ -47,32 +54,143 @@ paths:
               schema:
                 type: object
                 required:
-                - folders
-                - page
-                - limit
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
-                  folders:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/OrganizationFolder'
-                  page:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
                     type: integer
-                    example: 1
-                  limit:
-                    type: integer
-                    example: 20
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: object
+                    required:
+                    - folders
+                    - page
+                    - limit
+                    properties:
+                      folders:
+                        type: array
+                        items:
+                          allOf:
+                          - $ref: '#/components/schemas/OrganizationFolder'
+                          - type: object
+                            required:
+                            - agentCount
+                            properties:
+                              agentCount:
+                                type: integer
+                                example: 3
+                                description: Number of agents in the folder that are not deleted. Returned by the list only, not by Get Organization Folder.
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 20
+                  timestamp:
+                    type: string
+                    format: date-time
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      folders:
+                      - id: f5k2m8x1q9w3zp
+                        organization_id: o14XKPP84rt22g
+                        name: Sales Agents
+                        is_deleted: false
+                        createdAt: '2026-07-03T10:30:00.000Z'
+                        updatedAt: '2026-07-03T10:30:00.000Z'
+                        organization:
+                          id: o14XKPP84rt22g
+                          title: Acme Lending
+                        agentCount: 3
+                      page: 1
+                      limit: 20
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Authenticated organization not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    error: true
+                    success: false
+                    data: []
+                    message: Organization with ID o14XKPP84rt22g not found
+                    errors: []
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: Internal server error
+                    errors: []
+        '400':
+          description: page or limit is out of range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: Limit must be between 1 and 50
+                    errors: []
       security:
       - bearer: []
       summary: List Organization Folders
@@ -86,29 +204,110 @@ paths:
       - name: id
         required: true
         in: path
-        description: Organization folder ID.
+        description: ID of the folder
         schema:
           type: string
-          example: fld_abc123xyz789
       responses:
         '200':
           description: Organization folder returned successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrganizationFolder'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/OrganizationFolder'
+                  timestamp:
+                    type: string
+                    format: date-time
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      id: f5k2m8x1q9w3zp
+                      organization_id: o14XKPP84rt22g
+                      name: Sales Agents
+                      is_deleted: false
+                      createdAt: '2026-07-03T10:30:00.000Z'
+                      updatedAt: '2026-07-03T10:30:00.000Z'
+                      organization:
+                        id: o14XKPP84rt22g
+                        title: Acme Lending
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Folder not found in the authenticated organization.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Folder with ID f5k2m8x1q9w3zp not found for organization ID: o14XKPP84rt22g'
+                    errors: []
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: Internal server error
+                    errors: []
       security:
       - bearer: []
       summary: Get Organization Folder
@@ -122,10 +321,10 @@ components:
       properties:
         id:
           type: string
-          example: fld_abc123xyz789
+          example: f5k2m8x1q9w3zp
         organization_id:
           type: string
-          example: org_abc123xyz789
+          example: o14XKPP84rt22g
         name:
           type: string
           maxLength: 35
@@ -133,39 +332,88 @@ components:
         is_deleted:
           type: boolean
           example: false
-        created_at:
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
+        organization:
+          type: object
+          description: The organization that owns the folder.
+          properties:
+            id:
+              type: string
+              example: o14XKPP84rt22g
+            title:
+              type: string
+              example: Acme Lending
       required:
       - id
       - organization_id
       - name
       - is_deleted
-      - created_at
-      - updated_at
+      - createdAt
+      - updatedAt
     ErrorResponse:
       type: object
+      description: Error body on endpoints without response filtering.
       properties:
         statusCode:
           type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
+          example: 404
         error:
+          type: boolean
+          enum:
+          - true
+        success:
+          type: boolean
+          enum:
+          - false
+        data:
+          oneOf:
+          - type: object
+            properties:
+              code:
+                type: string
+                description: Machine-readable refusal code.
+          - type: array
+            items: {}
+          description: For a coded refusal, an object with code and the details listed for that code. Otherwise an empty array.
+        message:
           type: string
-          example: Bad Request
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation messages for a 400. Empty for other errors.
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
       required:
       - statusCode
-      - message
       - error
+      - success
+      - data
+      - message
+      - errors
   securitySchemes:
     bearer:
       scheme: bearer

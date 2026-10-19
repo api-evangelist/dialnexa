@@ -4,7 +4,9 @@
     "_original/dialnexa-openapi.json"
   ],
   "outputs": [
+    "dialnexa-agent-builder-api-openapi.yml",
     "dialnexa-agents-api-openapi.yml",
+    "dialnexa-authentication-api-openapi.yml",
     "dialnexa-batch-calls-api-openapi.yml",
     "dialnexa-calls-api-openapi.yml",
     "dialnexa-knowledge-base-api-openapi.yml",
@@ -22,26 +24,9 @@
   "errors": [],
   "warnings": [],
   "notes": [
-    "1 archived document(s) dropped as subsets of other archived documents",
     "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
     "dialnexa-openapi.json: upgraded openapi 3.0.0 -> OpenAPI 3.2.0",
-    "dialnexa-openapi.json: declared missing tag: Organization Folders",
-    "apis.yml register: already-registered"
+    "apis.yml register: written (+2 apis, 15 total)"
   ],
-  "skipped": [
-    "_original/dialnexa-api-openapi.yml: archived document superseded by a larger archived document",
-    "dialnexa-agents-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-batch-calls-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-calls-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-knowledge-base-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-languages-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-llms-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-organization-folders-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-phone-numbers-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-transcribers-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-voices-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-webhooks-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-workflow-leads-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "dialnexa-workflows-api-openapi.yml: previously refined output, superseded by openapi/_original/"
-  ]
+  "skipped": []
 }

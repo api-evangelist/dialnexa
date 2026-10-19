@@ -21,17 +21,58 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Transcriber'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transcriber'
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                  - id: trs_deepgram_nova_2
-                    name: Deepgram Nova 2
-                    provider: deepgram
-                    supports_fallback: true
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                    - id: trs_tr0soniox001xx
+                      provider: soniox
+                      model_id: stt-rt-v5
+                      name: Soniox STT RT v5
+                      description: Soniox real-time speech-to-text model v5.
+                      supported_language_codes: null
+                      provider_model_id: pmd_798b2e5834
+                      is_primary: true
+                      is_fallback: true
+                      is_deleted: false
+                      createdAt: '2026-03-01T00:00:00.000Z'
+                      updatedAt: '2026-03-01T00:00:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -43,8 +84,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -56,27 +100,17 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    errors: []
       security:
       - bearer: []
       summary: List Transcribers
       tags:
       - Transcribers
-      description: Returns the complete catalog of speech-to-text transcribers available for agents.
+      description: Returns the speech-to-text transcribers that can be an agent's primary transcriber. Use List Fallback Transcribers for fallback choices.
   /v1/transcribers/fallback:
     get:
       description: Returns all transcribers eligible for use as a fallback STT provider. Use this list to populate the Fallback STT selector when configuring per-agent STT fallback settings.
@@ -88,40 +122,90 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      example: trs_tr0deepnova3xx
-                    name:
-                      type: string
-                      example: Deepgram Nova 2
-                    provider:
-                      type: string
-                      example: deepgram
-                    model_id:
-                      type: string
-                      example: nova-2
-                    description:
-                      type:
-                      - string
-                      - 'null'
-                    supported_language_codes:
-                      type:
-                      - array
-                      - 'null'
-                      items:
-                        type: string
-                      example: null
-                      description: null means all languages supported
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transcriber'
+                  timestamp:
+                    type: string
+                    format: date-time
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                    - id: trs_tr0soniox001xx
+                      provider: soniox
+                      model_id: stt-rt-v5
+                      name: Soniox STT RT v5
+                      description: Soniox real-time speech-to-text model v5.
+                      supported_language_codes: null
+                      provider_model_id: pmd_798b2e5834
+                      is_primary: true
+                      is_fallback: true
+                      is_deleted: false
+                      createdAt: '2026-03-01T00:00:00.000Z'
+                      updatedAt: '2026-03-01T00:00:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
-        '403':
-          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '500':
           description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: Internal server error
+                    errors: []
       security:
       - bearer: []
       summary: List Fallback Transcribers
@@ -136,7 +220,7 @@ paths:
         in: path
         description: Transcriber ID
         schema:
-          example: trs_abc123
+          example: trs_tr0soniox001xx
           type: string
       responses:
         '200':
@@ -144,15 +228,56 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Transcriber'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/Transcriber'
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: trs_deepgram_nova_2
-                    name: Deepgram Nova 2
-                    provider: deepgram
-                    supports_fallback: true
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      id: trs_tr0soniox001xx
+                      provider: soniox
+                      model_id: stt-rt-v5
+                      name: Soniox STT RT v5
+                      description: Soniox real-time speech-to-text model v5.
+                      supported_language_codes: null
+                      provider_model_id: pmd_798b2e5834
+                      is_primary: true
+                      is_fallback: true
+                      is_deleted: false
+                      createdAt: '2026-03-01T00:00:00.000Z'
+                      updatedAt: '2026-03-01T00:00:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized.
           content:
@@ -164,8 +289,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Transcriber not found.
           content:
@@ -177,8 +305,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Transcriber not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Transcriber tr0deepnova3xx not found
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -190,34 +321,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
-        '400':
-          description: Invalid catalog ID format.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 400 Bad Request
-                  value:
-                    statusCode: 400
-                    message: Invalid catalog ID format
-                    error: Bad Request
+                    errors: []
       security:
       - bearer: []
       summary: Get Transcriber Details
@@ -231,30 +339,109 @@ components:
       properties:
         id:
           type: string
-          example: trs_abc123
-          description: Signed transcriber ID
+          example: trs_tr0soniox001xx
+        provider:
+          type: string
+          example: soniox
+          description: Speech-to-text provider.
+        model_id:
+          type: string
+          example: stt-rt-v5
+          description: Provider model identifier.
+        name:
+          type: string
+          example: Soniox STT RT v5
+        description:
+          type:
+          - string
+          - 'null'
+        supported_language_codes:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: Language codes the model supports; null when the provider accepts any.
+        provider_model_id:
+          type:
+          - string
+          - 'null'
+          example: pmd_798b2e5834
+        is_primary:
+          type: boolean
+          description: Selectable as the main transcriber.
+        is_fallback:
+          type: boolean
+          description: Selectable as the fallback transcriber.
+        is_deleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
       required:
       - id
     ErrorResponse:
       type: object
+      description: Error body on endpoints without response filtering.
       properties:
         statusCode:
           type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
+          example: 404
         error:
+          type: boolean
+          enum:
+          - true
+        success:
+          type: boolean
+          enum:
+          - false
+        data:
+          oneOf:
+          - type: object
+            properties:
+              code:
+                type: string
+                description: Machine-readable refusal code.
+          - type: array
+            items: {}
+          description: For a coded refusal, an object with code and the details listed for that code. Otherwise an empty array.
+        message:
           type: string
-          example: Bad Request
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation messages for a 400. Empty for other errors.
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
       required:
       - statusCode
-      - message
       - error
+      - success
+      - data
+      - message
+      - errors
   securitySchemes:
     bearer:
       scheme: bearer

@@ -32,17 +32,50 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KnowledgeBase'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/KnowledgeBase'
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: kb_abc123
-                    name: Loan FAQ
-                    description: Frequently asked questions for loan calls
-                    file_name: loan-faq.pdf
-                    status: ready
-                    createdAt: '2026-07-03T10:30:00.000Z'
+                    success: true
+                    error: false
+                    statusCode: 201
+                    message: Success
+                    data:
+                      id: kb_abc123
+                      name: Loan FAQ
+                      org_id: o14XKPP84rt22g
+                      is_deleted: false
+                      created_at: '2026-07-03T10:30:00.000Z'
+                      updated_at: '2026-07-03T10:45:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized.
           content:
@@ -54,8 +87,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '409':
           description: Knowledge base name already exists.
           content:
@@ -67,8 +103,44 @@ paths:
                   summary: 409 Conflict
                   value:
                     statusCode: 409
-                    message: Knowledge base with this name already exists
-                    error: Conflict
+                    error: true
+                    success: false
+                    data: []
+                    message: A knowledge base named "Support FAQ" already exists in this workspace
+                    errors: []
+        '400':
+          description: Invalid request body, for example a blank name or one over 150 characters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: name must not be blank
+                    errors:
+                    - name must not be blank
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: Internal server error
+                    errors: []
       security:
       - bearer: []
       summary: Create Knowledge Base
@@ -81,29 +153,34 @@ paths:
       - name: page
         required: false
         in: query
+        description: Page number, starting at 1. Must be a whole number; 0 is treated as 1.
         schema:
+          type: integer
+          default: 1
           example: 1
-          type: number
       - name: limit
         required: false
         in: query
+        description: Knowledge bases per page. Must be a whole number. Default 20; 0 returns 50 per page, values above 100 are treated as 100, and a negative value fails with 500.
         schema:
+          type: integer
+          default: 20
           example: 20
-          type: number
       - name: sortBy
         required: false
         in: query
+        description: 'Column to sort by: id, name, org_id, is_deleted, created_at or updated_at. Default id. Any other value fails with 500.'
         schema:
-          example: id
           type: string
+          default: id
+          example: id
       - name: sortOrder
         required: false
         in: query
+        description: 'Sort direction: ASC or DESC, in any case. Default ASC. Any other value fails with 500.'
         schema:
-          enum:
-          - ASC
-          - DESC
           type: string
+          default: ASC
       responses:
         '200':
           description: Knowledge bases returned successfully.
@@ -112,45 +189,82 @@ paths:
               schema:
                 type: object
                 required:
-                - items
-                - meta
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/KnowledgeBase'
-                  meta:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
                     type: object
                     required:
-                    - totalItems
-                    - itemsPerPage
-                    - totalPages
-                    - currentPage
+                    - items
+                    - meta
                     properties:
-                      totalItems:
-                        type: integer
-                        example: 1
-                      itemsPerPage:
-                        type: integer
-                        example: 20
-                      totalPages:
-                        type: integer
-                        example: 1
-                      currentPage:
-                        type: integer
-                        example: 1
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/KnowledgeBase'
+                      meta:
+                        type: object
+                        required:
+                        - totalItems
+                        - itemsPerPage
+                        - totalPages
+                        - currentPage
+                        properties:
+                          totalItems:
+                            type: integer
+                            example: 1
+                          itemsPerPage:
+                            type: integer
+                            example: 20
+                          totalPages:
+                            type: integer
+                            example: 1
+                          currentPage:
+                            type: integer
+                            example: 1
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    items:
-                    - id: kb_abc123
-                      name: Loan FAQ
-                    meta:
-                      totalItems: 1
-                      itemsPerPage: 20
-                      totalPages: 1
-                      currentPage: 1
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      items:
+                      - id: kb_abc123
+                        name: Loan FAQ
+                        org_id: o14XKPP84rt22g
+                        is_deleted: false
+                        created_at: '2026-07-03T10:30:00.000Z'
+                        updated_at: '2026-07-03T10:45:00.000Z'
+                      meta:
+                        totalItems: 1
+                        itemsPerPage: 20
+                        totalPages: 1
+                        currentPage: 1
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized.
           content:
@@ -162,8 +276,44 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: Internal server error
+                    errors: []
+        '400':
+          description: page or limit is a decimal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                decimal:
+                  summary: Decimal page
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: Validation failed (numeric string is expected)
+                    errors:
+                    - Validation failed (numeric string is expected)
       security:
       - bearer: []
       summary: List Knowledge Bases
@@ -177,7 +327,9 @@ paths:
       - name: id
         required: true
         in: path
+        description: Knowledge base ID
         schema:
+          example: kb_abc123
           type: string
       requestBody:
         required: true
@@ -196,19 +348,52 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KnowledgeBase'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/KnowledgeBase'
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: kb_abc123
-                    name: Updated Loan FAQ
-                    description: Frequently asked questions for loan calls
-                    file_name: loan-faq.pdf
-                    status: ready
-                    createdAt: '2026-07-03T10:30:00.000Z'
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      id: kb_abc123
+                      name: Updated Loan FAQ
+                      org_id: o14XKPP84rt22g
+                      is_deleted: false
+                      created_at: '2026-07-03T10:30:00.000Z'
+                      updated_at: '2026-07-03T10:45:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '409':
-          description: New name already in use in this workspace
+          description: New name already in use in this workspace, or the knowledge base is indexing a document.
           content:
             application/json:
               schema:
@@ -218,21 +403,103 @@ paths:
                   summary: 409 Conflict
                   value:
                     statusCode: 409
-                    message: Knowledge base with this name already exists
-                    error: Conflict
+                    error: true
+                    success: false
+                    data: []
+                    message: A knowledge base named "Support FAQ" already exists in this workspace
+                    errors: []
+                indexing:
+                  summary: Knowledge base is indexing
+                  value:
+                    statusCode: 409
+                    error: true
+                    success: false
+                    data:
+                      code: KNOWLEDGE_BASE_INDEXING
+                      knowledge_base_ids:
+                      - kb_Qm4TzR8wLp2VxN
+                    message: This knowledge base is indexing a document. Try again in a few minutes.
+                    errors: []
+        '400':
+          description: Invalid request body, for example a blank name.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: name must not be blank
+                    errors:
+                    - name must not be blank
+        '401':
+          description: 'Unauthorized: missing or invalid API key.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
+        '404':
+          description: Knowledge base not found in this workspace.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    error: true
+                    success: false
+                    data: []
+                    message: Knowledge base with ID abc123def45678 not found
+                    errors: []
+        '500':
+          description: Internal server error. A name longer than 150 characters also returns 500, with a message that starts `Error updating knowledge base:` followed by the database error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: Internal server error
+                    errors: []
       security:
       - bearer: []
       summary: Update Knowledge Base
       tags:
       - Knowledge Base
-      description: Renames one knowledge base without changing its ID or agent attachments.
+      description: Renames one knowledge base without changing its ID or agent attachments. Returns 409 when another knowledge base in the workspace has the name, or while a document is being indexed.
     delete:
       operationId: deleteKnowledgeBase
       parameters:
       - name: id
         required: true
         in: path
+        description: Knowledge base ID
         schema:
+          example: kb_abc123
           type: string
       responses:
         '200':
@@ -244,16 +511,37 @@ paths:
                   summary: Successful response
                   value:
                     success: true
-                    message: Knowledge base deleted successfully
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    timestamp: '2026-09-07T06:00:00.000Z'
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - timestamp
+                description: The standard envelope without a data member.
                 properties:
                   success:
                     type: boolean
-                    example: true
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
                   message:
                     type: string
-                    example: Knowledge base deleted successfully
+                    example: Success
+                  timestamp:
+                    type: string
+                    format: date-time
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -265,21 +553,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden - knowledge base does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Knowledge base not found.
           content:
@@ -291,8 +569,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Knowledge base not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Knowledge base with ID Qm4TzR8wLp2VxN not found
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -304,31 +585,42 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
+                    errors: []
         '409':
-          description: Knowledge base is still used by one or more agents.
+          description: 'Conflict. data.code KNOWLEDGE_BASE_IN_USE: agents still use the knowledge base and data.agent_ids lists them. data.code KNOWLEDGE_BASE_INDEXING: a document is still being indexed and data.knowledge_base_ids names the knowledge base; retry once it finishes.'
           content:
             application/json:
               schema:
-                allOf:
-                - $ref: '#/components/schemas/ErrorResponse'
-                properties:
-                  agent_ids:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - agent_2g7Xy3tY53gRlp
+                $ref: '#/components/schemas/ErrorResponse'
               examples:
                 knowledgeBaseInUse:
                   summary: 409 Conflict
                   value:
                     statusCode: 409
+                    error: true
+                    success: false
+                    data:
+                      code: KNOWLEDGE_BASE_IN_USE
+                      agent_ids:
+                      - agent_2g7Xy3tY53gRlp
                     message: 'This knowledge base cannot be deleted because it is being used by 1 agent(s): agent_2g7Xy3tY53gRlp. Please unlink it from these agents before deleting.'
-                    agent_ids:
-                    - agent_2g7Xy3tY53gRlp
-                    error: Conflict
+                    errors: []
+                knowledgeBaseIndexing:
+                  summary: Document still indexing
+                  value:
+                    statusCode: 409
+                    error: true
+                    success: false
+                    data:
+                      code: KNOWLEDGE_BASE_INDEXING
+                      knowledge_base_ids:
+                      - kb_Qm4TzR8wLp2VxN
+                    message: This knowledge base is indexing a document. Try again in a few minutes.
+                    errors: []
       security:
       - bearer: []
       summary: Delete Knowledge Base
@@ -341,7 +633,9 @@ paths:
       - name: id
         required: true
         in: path
+        description: Knowledge base ID
         schema:
+          example: kb_abc123
           type: string
       responses:
         '200':
@@ -349,25 +643,559 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KnowledgeBase'
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    $ref: '#/components/schemas/KnowledgeBase'
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: kb_abc123
-                    name: Loan FAQ
-                    description: Frequently asked questions for loan calls
-                    file_name: loan-faq.pdf
-                    status: ready
-                    createdAt: '2026-07-03T10:30:00.000Z'
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      id: kb_abc123
+                      name: Loan FAQ
+                      org_id: o14XKPP84rt22g
+                      is_deleted: false
+                      created_at: '2026-07-03T10:30:00.000Z'
+                      updated_at: '2026-07-03T10:45:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
+        '401':
+          description: 'Unauthorized: missing or invalid API key.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
+        '404':
+          description: Knowledge base not found in this workspace.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    error: true
+                    success: false
+                    data: []
+                    message: Knowledge base with ID abc123def45678 not found
+                    errors: []
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: Internal server error
+                    errors: []
       security:
       - bearer: []
       summary: Get Knowledge Base Details
       tags:
       - Knowledge Base
       description: Returns one knowledge base owned by the authenticated workspace.
+  /v1/documents:
+    get:
+      operationId: listKnowledgeBaseDocuments
+      summary: List Knowledge Base Documents
+      description: Lists non-deleted documents for the supplied knowledge base with pagination metadata.
+      tags:
+      - Knowledge Base
+      security:
+      - bearer: []
+      parameters:
+      - name: knowledge_base_id
+        in: query
+        required: true
+        schema:
+          type: string
+          example: kb_abc123def45678
+        description: Knowledge base ID.
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 1
+        description: Page number.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 10
+        description: Documents per page.
+      - name: sortBy
+        in: query
+        required: false
+        schema:
+          type: string
+          default: id
+        description: Document field to sort by.
+      - name: sortOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          default: ASC
+        description: 'Sort direction: ASC or DESC, in any case. Default ASC. Any other value fails with 500.'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: boolean
+                  statusCode:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/KnowledgeBaseDocument'
+                      meta:
+                        type: object
+                        properties:
+                          totalItems:
+                            type: integer
+                          itemsPerPage:
+                            type: integer
+                          totalPages:
+                            type: integer
+                          currentPage:
+                            type: integer
+                    required:
+                    - items
+                    - meta
+                  timestamp:
+                    type: string
+                    format: date-time
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+              examples:
+                success:
+                  value:
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      items:
+                      - id: Dk4mP8vQ2nLz7x
+                        title: Support FAQ
+                        knowledge_base_id: abc123def45678
+                        description: ''
+                        content: How do I reset my password? Open Settings and choose Reset password.
+                        source: ''
+                        document_type: txt
+                        file_size: 0.0664
+                        file_path: knowledge-documents/abc123def45678/Support_FAQ-Dk4mP8vQ2nLz7x.txt
+                        is_deleted: false
+                        ingest_status: processing
+                        ingest_error: null
+                        ingest_updated_at: '2026-07-03T10:30:00.000Z'
+                        ingest_job_id: 3f6c2a9e-8b1d-4e7a-9c5f-2d8e1b7a4c63
+                      meta:
+                        totalItems: 1
+                        itemsPerPage: 10
+                        totalPages: 1
+                        currentPage: 1
+                    timestamp: '2026-09-07T06:00:00.000Z'
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
+        '404':
+          description: Knowledge base not found in this workspace, or it has been deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  value:
+                    statusCode: 404
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Error fetching documents: Knowledge base with ID Qm4TzR8wLp2VxN not found'
+                    errors: []
+        '400':
+          description: knowledge_base_id is missing, or page or limit is a decimal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: Missing knowledge_base_id
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: knowledge_base_id is required
+                    errors:
+                    - knowledge_base_id is required
+                decimal:
+                  summary: Decimal page
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: Validation failed (numeric string is expected)
+                    errors:
+                    - Validation failed (numeric string is expected)
+        '500':
+          description: An unknown sortBy field, or page 0.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: Unknown sortBy
+                  value:
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Error fetching documents: column KnowledgeDocument.bogus does not exist'
+                    errors: []
+  /v1/documents/upload:
+    post:
+      operationId: uploadKnowledgeBaseDocument
+      summary: Upload Knowledge Base Document
+      description: Stores one PDF, TXT, or DOCX document and starts background indexing. Maximum 20 MB per file and 20 MB extracted text, with 25 non-deleted documents per knowledge base. A 201 response means accepted, not ready for retrieval. Poll List Knowledge Base Documents until ingest_status is ready. Titles must be unique within the knowledge base.
+      tags:
+      - Knowledge Base
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: boolean
+                  statusCode:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/KnowledgeBaseDocument'
+                  timestamp:
+                    type: string
+                    format: date-time
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+              examples:
+                success:
+                  value:
+                    success: true
+                    error: false
+                    statusCode: 201
+                    message: Success
+                    data:
+                      id: Dk4mP8vQ2nLz7x
+                      title: Support FAQ
+                      knowledge_base_id: abc123def45678
+                      description: ''
+                      content: How do I reset my password? Open Settings and choose Reset password.
+                      source: ''
+                      document_type: txt
+                      file_size: 0.0664
+                      file_path: knowledge-documents/abc123def45678/Support_FAQ-Dk4mP8vQ2nLz7x.txt
+                      is_deleted: false
+                      ingest_status: processing
+                      ingest_error: null
+                      ingest_updated_at: '2026-07-03T10:30:00.000Z'
+                      ingest_job_id: 3f6c2a9e-8b1d-4e7a-9c5f-2d8e1b7a4c63
+                    timestamp: '2026-09-07T06:00:00.000Z'
+        '400':
+          description: Missing fields, unsupported file, or document count limit reached.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: Maximum limit of 25 documents reached for knowledge base ID Qm4TzR8wLp2VxN
+                    errors: []
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
+        '404':
+          description: Knowledge base not found in this workspace, or it has been deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  value:
+                    statusCode: 404
+                    error: true
+                    success: false
+                    data: []
+                    message: Knowledge base with ID Qm4TzR8wLp2VxN not found
+                    errors: []
+        '409':
+          description: A document with this title already exists, or the knowledge base is currently indexing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  value:
+                    statusCode: 409
+                    error: true
+                    success: false
+                    data: []
+                    message: A document named "Pricing FAQ" already exists in this knowledge base
+                    errors: []
+        '413':
+          description: File exceeds 21 MB and is rejected by the upload interceptor before the handler runs. A file between 20 MB and 21 MB gets a 400 instead.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  value:
+                    statusCode: 413
+                    error: true
+                    success: false
+                    data: []
+                    message: File too large
+                    errors: []
+        '500':
+          description: Document parsing, storage, or indexing failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  value:
+                    statusCode: 500
+                    error: true
+                    success: false
+                    data: []
+                    message: Could not start indexing for this document. Please try again.
+                    errors: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF, TXT, or DOCX file, at most 20 MB (20971520 bytes). Legacy DOC files are not supported.
+                title:
+                  type: string
+                  minLength: 1
+                knowledge_base_id:
+                  type: string
+                description:
+                  type: string
+                source:
+                  type: string
+              required:
+              - file
+              - title
+              - knowledge_base_id
+            examples:
+              request:
+                value:
+                  file: support-faq.txt
+                  title: Support FAQ
+                  knowledge_base_id: kb_abc123def45678
 components:
   schemas:
+    UpdateKnowledgeBaseRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          pattern: \S
+          description: 'Knowledge base name. Must not be blank when provided. Keep it to 150 characters: a longer name is refused with 500.'
+          example: Updated Product Documentation
+    CreateKnowledgeBaseRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+          pattern: \S
+          description: Knowledge base name, at most 150 characters and not blank.
+          example: Product Documentation
+      required:
+      - name
+    ErrorResponse:
+      type: object
+      description: Error body on endpoints without response filtering.
+      properties:
+        statusCode:
+          type: integer
+          example: 404
+        error:
+          type: boolean
+          enum:
+          - true
+        success:
+          type: boolean
+          enum:
+          - false
+        data:
+          oneOf:
+          - type: object
+            properties:
+              code:
+                type: string
+                description: Machine-readable refusal code.
+          - type: array
+            items: {}
+          description: For a coded refusal, an object with code and the details listed for that code. Otherwise an empty array.
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation messages for a 400. Empty for other errors.
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
+      required:
+      - statusCode
+      - error
+      - success
+      - data
+      - message
+      - errors
     KnowledgeBase:
       type: object
       properties:
@@ -379,6 +1207,13 @@ components:
           type: string
           example: Loan FAQ
           maxLength: 150
+        org_id:
+          type: string
+          example: o14XKPP84rt22g
+          description: Owning organization.
+        is_deleted:
+          type: boolean
+          description: Whether the knowledge base has been deleted.
         created_at:
           type: string
           format: date-time
@@ -388,43 +1223,55 @@ components:
       required:
       - id
       - name
-    UpdateKnowledgeBaseRequest:
+    KnowledgeBaseDocument:
       type: object
       properties:
-        name:
+        id:
           type: string
-          description: Name of the knowledge base
-          example: Updated Product Documentation
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
+          description: Document ID (raw, no prefix).
+        title:
           type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
-    CreateKnowledgeBaseRequest:
-      type: object
-      properties:
-        name:
+        knowledge_base_id:
           type: string
-          description: Name of the knowledge base (must be unique within the workspace)
-          example: Product Documentation
-          maxLength: 150
-      required:
-      - name
+          description: Knowledge base ID without the kb_ prefix.
+        description:
+          type: string
+        content:
+          type: string
+          description: Full text extracted from the file.
+        source:
+          type: string
+        document_type:
+          type: string
+        file_path:
+          type: string
+          description: Storage path of the uploaded file.
+        file_size:
+          type: number
+          description: File size in KB (1024 bytes).
+        is_deleted:
+          type: boolean
+        ingest_status:
+          type: string
+          enum:
+          - processing
+          - ready
+          - failed
+          description: 'Indexing state: processing until indexing finishes, then ready. A document whose indexing fails is marked failed with ingest_error set and deleted at the same time, so it leaves the document list and can be uploaded again under the same title.'
+        ingest_error:
+          type:
+          - string
+          - 'null'
+        ingest_updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        ingest_job_id:
+          type:
+          - string
+          - 'null'
+          description: Identifier of the current indexing attempt.
   securitySchemes:
     bearer:
       scheme: bearer

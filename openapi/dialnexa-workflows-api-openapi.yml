@@ -15,32 +15,47 @@ paths:
     get:
       operationId: listWorkflows
       parameters:
-      - name: sortOrder
-        required: false
-        in: query
-        schema:
-          enum:
-          - ASC
-          - DESC
-          type: string
-      - name: sortBy
-        required: false
-        in: query
-        schema:
-          example: createdAt
-          type: string
-      - name: limit
-        required: false
-        in: query
-        schema:
-          example: 20
-          type: number
       - name: page
         required: false
         in: query
+        description: Page number, starting from 1.
         schema:
-          example: 1
+          minimum: 1
+          default: 1
           type: number
+      - name: limit
+        required: false
+        in: query
+        description: Results per page.
+        schema:
+          minimum: 1
+          default: 10
+          type: number
+      - name: sortBy
+        required: false
+        in: query
+        description: Field to sort by.
+        schema:
+          default: created_at
+          type: string
+          enum:
+          - created_at
+          - updated_at
+          - createdAt
+          - updatedAt
+          - title
+          - status
+          - id
+      - name: sortOrder
+        required: false
+        in: query
+        description: Sort direction.
+        schema:
+          default: DESC
+          type: string
+          enum:
+          - ASC
+          - DESC
       responses:
         '200':
           description: Workflows fetched successfully.
@@ -48,77 +63,133 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
                   statusCode:
-                    type: number
+                    type: integer
                     example: 200
                   message:
                     type: string
-                    example: Workflows fetched successfully
+                    example: Success
                   data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          example: workflow_abc123
-                        title:
-                          type: string
-                          example: Q3 Outreach Workflow
-                        status:
-                          type: string
-                          enum:
-                          - draft
-                          - active
-                          - paused
-                          - completed
-                          - cancelled
-                          example: active
-                        description:
-                          type:
-                          - string
-                          - 'null'
-                          example: Automated follow-up sequence
-                        createdAt:
-                          type: string
-                          format: date-time
-                        updatedAt:
-                          type: string
-                          format: date-time
-                  meta:
                     type: object
                     properties:
-                      totalItems:
+                      statusCode:
                         type: number
-                        example: 50
-                      itemsPerPage:
-                        type: number
-                        example: 20
-                      totalPages:
-                        type: number
-                        example: 3
-                      currentPage:
-                        type: number
-                        example: 1
+                        example: 200
+                      message:
+                        type: string
+                        example: Workflows fetched successfully
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: workflow_abc123
+                            title:
+                              type: string
+                              maxLength: 100
+                              example: Q3 Outreach Workflow
+                            status:
+                              type: string
+                              enum:
+                              - draft
+                              - active
+                              - paused
+                              - completed
+                              - cancelled
+                              example: active
+                            description:
+                              type:
+                              - string
+                              - 'null'
+                              example: Automated follow-up sequence
+                            organization_id:
+                              type: string
+                              description: Owning organization (raw ID).
+                              example: o14XKPP84rt22g
+                            is_deleted:
+                              type: boolean
+                              example: false
+                            fallback_variables:
+                              type:
+                              - array
+                              - 'null'
+                              items:
+                                type: object
+                                properties:
+                                  key:
+                                    type: string
+                                  default_value:
+                                    type: string
+                              description: Fallback values for lead variables missing from an uploaded lead.
+                            createdAt:
+                              type: string
+                              format: date-time
+                            updatedAt:
+                              type: string
+                              format: date-time
+                      meta:
+                        type: object
+                        properties:
+                          totalItems:
+                            type: number
+                            example: 50
+                          itemsPerPage:
+                            type: number
+                            example: 10
+                          totalPages:
+                            type: number
+                            example: 3
+                          currentPage:
+                            type: number
+                            example: 1
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
+                    success: true
+                    error: false
                     statusCode: 200
-                    message: Workflows fetched successfully
+                    message: Success
                     data:
-                    - id: workflow_abc123
-                      title: Q3 Outreach Workflow
-                      status: active
-                      description: Automated follow-up sequence
-                      createdAt: '2026-07-03T10:30:00.000Z'
-                      updatedAt: '2026-07-03T10:45:00.000Z'
-                    meta:
-                      totalItems: 1
-                      itemsPerPage: 20
-                      totalPages: 1
-                      currentPage: 1
+                      statusCode: 200
+                      message: Workflows fetched successfully
+                      data:
+                      - id: workflow_abc123
+                        title: Q3 Outreach Workflow
+                        status: active
+                        description: Automated follow-up sequence
+                        organization_id: o14XKPP84rt22g
+                        is_deleted: false
+                        fallback_variables: []
+                        createdAt: '2026-07-03T10:30:00.000Z'
+                        updatedAt: '2026-07-03T10:45:00.000Z'
+                      meta:
+                        totalItems: 1
+                        itemsPerPage: 10
+                        totalPages: 1
+                        currentPage: 1
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '400':
           description: Invalid query parameters.
           content:
@@ -130,8 +201,12 @@ paths:
                   summary: 400 Bad Request
                   value:
                     statusCode: 400
-                    message: Workflow validation failed
-                    error: Bad Request
+                    error: true
+                    success: false
+                    data: []
+                    message: 'sortBy must be one of the following values: created_at, updated_at, createdAt, updatedAt, title, status, id'
+                    errors:
+                    - 'sortBy must be one of the following values: created_at, updated_at, createdAt, updatedAt, title, status, id'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -143,8 +218,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '500':
           description: Internal Server Error
           content:
@@ -156,8 +234,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Error fetching workflows: Internal server error'
+                    errors: []
       security:
       - bearer: []
       summary: List Workflows
@@ -182,68 +263,111 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
                   statusCode:
-                    type: number
+                    type: integer
                     example: 200
                   message:
                     type: string
-                    example: Workflow fetched successfully
+                    example: Success
                   data:
                     type: object
                     properties:
-                      id:
+                      statusCode:
+                        type: number
+                        example: 200
+                      message:
                         type: string
-                        example: workflow_abc123
-                      title:
-                        type: string
-                        example: Q3 Outreach Workflow
-                      status:
-                        type: string
-                        enum:
-                        - draft
-                        - active
-                        - paused
-                        - completed
-                        - cancelled
-                        example: active
-                      description:
-                        type:
-                        - string
-                        - 'null'
-                        example: Automated follow-up sequence
-                      createdAt:
-                        type: string
-                        format: date-time
-                      updatedAt:
-                        type: string
-                        format: date-time
+                        example: Workflow fetched successfully
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: workflow_abc123
+                          title:
+                            type: string
+                            maxLength: 100
+                            example: Q3 Outreach Workflow
+                          status:
+                            type: string
+                            enum:
+                            - draft
+                            - active
+                            - paused
+                            - completed
+                            - cancelled
+                            example: active
+                          description:
+                            type:
+                            - string
+                            - 'null'
+                            example: Automated follow-up sequence
+                          organization_id:
+                            type: string
+                            description: Owning organization (raw ID).
+                            example: o14XKPP84rt22g
+                          is_deleted:
+                            type: boolean
+                            example: false
+                          fallback_variables:
+                            type:
+                            - array
+                            - 'null'
+                            items:
+                              type: object
+                              properties:
+                                key:
+                                  type: string
+                                default_value:
+                                  type: string
+                            description: Fallback values for lead variables missing from an uploaded lead.
+                          createdAt:
+                            type: string
+                            format: date-time
+                          updatedAt:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
+                    success: true
+                    error: false
                     statusCode: 200
-                    message: Workflow fetched successfully
+                    message: Success
                     data:
-                      id: workflow_abc123
-                      title: Q3 Outreach Workflow
-                      status: active
-                      description: Automated follow-up sequence
-                      createdAt: '2026-07-03T10:30:00.000Z'
-                      updatedAt: '2026-07-03T10:45:00.000Z'
-        '400':
-          description: Invalid workflow ID format.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 400 Bad Request
-                  value:
-                    statusCode: 400
-                    message: Workflow validation failed
-                    error: Bad Request
+                      statusCode: 200
+                      message: Workflow fetched successfully
+                      data:
+                        id: workflow_abc123
+                        title: Q3 Outreach Workflow
+                        status: active
+                        description: Automated follow-up sequence
+                        organization_id: o14XKPP84rt22g
+                        is_deleted: false
+                        fallback_variables: []
+                        createdAt: '2026-07-03T10:30:00.000Z'
+                        updatedAt: '2026-07-03T10:45:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -255,8 +379,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Workflow not found
           content:
@@ -268,8 +395,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Workflow not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Workflow with ID Hk3pW9zQe1LmRt not found
+                    errors: []
         '500':
           description: Internal Server Error
           content:
@@ -281,8 +411,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
+                    errors: []
       security:
       - bearer: []
       summary: Get Workflow Details
@@ -293,7 +426,7 @@ paths:
     patch:
       operationId: updateWorkflowStatus
       summary: Update Workflow Status
-      description: Changes a workflow status. Use `activate` to start execution for all leads, `deactivate` to pause a currently active workflow, `pause` to pause a running workflow, or `resume` to continue a paused workflow.
+      description: 'Changes a workflow status. `activate` (from `draft` or `paused`) runs the pre-activation checks, sets the workflow `active` and starts every lead that has no execution yet. `deactivate` and `pause` (from `active`) set it `paused`: no new lead starts, including through an inbound call, and queued calls are not dialed. Leads already inside a step keep advancing: an expiring time hold or a finished call can still move a lead into a Voice Call node, whose call is queued and dialed once the workflow is active again, and an inbound call from such a lead is still routed into the workflow. `resume` (from `paused`) sets it `active` again without starting leads that were uploaded while it was paused; use `activate` for those.'
       parameters:
       - name: id
         required: true
@@ -307,19 +440,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - action
-              properties:
-                action:
-                  type: string
-                  enum:
-                  - activate
-                  - deactivate
-                  - pause
-                  - resume
-                  example: activate
-                  description: The workflow status transition to apply.
+              $ref: '#/components/schemas/UpdateWorkflowStatusRequest'
             examples:
               activate:
                 summary: Activate a workflow
@@ -346,55 +467,112 @@ paths:
                 success:
                   summary: Successful response
                   value:
+                    success: true
+                    error: false
                     statusCode: 200
-                    message: Workflow activated successfully
+                    message: Success
                     data:
-                      id: workflow_abc123
-                      title: Q3 Outreach Workflow
-                      status: active
-                      description: Automated follow-up sequence
-                      createdAt: '2026-07-03T10:30:00.000Z'
-                      updatedAt: '2026-07-03T10:45:00.000Z'
+                      statusCode: 200
+                      message: Workflow activated successfully
+                      data:
+                        id: workflow_abc123
+                        title: Q3 Outreach Workflow
+                        status: active
+                        description: Automated follow-up sequence
+                        organization_id: o14XKPP84rt22g
+                        is_deleted: false
+                        fallback_variables: []
+                        createdAt: '2026-07-03T10:30:00.000Z'
+                        updatedAt: '2026-07-03T10:45:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
                   statusCode:
-                    type: number
+                    type: integer
                     example: 200
                   message:
                     type: string
-                    example: Workflow activated successfully
+                    example: Success
                   data:
                     type: object
                     properties:
-                      id:
+                      statusCode:
+                        type: number
+                        example: 200
+                      message:
                         type: string
-                        example: workflow_abc123
-                      title:
-                        type: string
-                        example: Q3 Outreach Workflow
-                      status:
-                        type: string
-                        enum:
-                        - draft
-                        - active
-                        - paused
-                        - completed
-                        - cancelled
-                        example: active
-                      description:
-                        type:
-                        - string
-                        - 'null'
-                        example: Automated follow-up sequence
-                      createdAt:
-                        type: string
-                        format: date-time
-                      updatedAt:
-                        type: string
-                        format: date-time
+                        example: Workflow activated successfully
+                        description: Workflow activated, deactivated, paused or resumed successfully.
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: workflow_abc123
+                          title:
+                            type: string
+                            maxLength: 100
+                            example: Q3 Outreach Workflow
+                          status:
+                            type: string
+                            enum:
+                            - draft
+                            - active
+                            - paused
+                            - completed
+                            - cancelled
+                            example: active
+                          description:
+                            type:
+                            - string
+                            - 'null'
+                            example: Automated follow-up sequence
+                          organization_id:
+                            type: string
+                            description: Owning organization (raw ID).
+                            example: o14XKPP84rt22g
+                          is_deleted:
+                            type: boolean
+                            example: false
+                          fallback_variables:
+                            type:
+                            - array
+                            - 'null'
+                            items:
+                              type: object
+                              properties:
+                                key:
+                                  type: string
+                                default_value:
+                                  type: string
+                            description: Fallback values for lead variables missing from an uploaded lead.
+                          createdAt:
+                            type: string
+                            format: date-time
+                          updatedAt:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
-          description: Invalid action, invalid workflow status, or workflow validation failed.
+          description: Invalid action, or the action is not allowed for the workflow's current status (for example pausing a workflow that is not active, resuming one that is not paused, or activating one that is already active, completed or cancelled).
           content:
             application/json:
               schema:
@@ -404,8 +582,52 @@ paths:
                   summary: 400 Bad Request
                   value:
                     statusCode: 400
-                    message: 'Invalid action. Must be one of: activate, deactivate, pause, resume'
-                    error: Bad Request
+                    error: true
+                    success: false
+                    data: []
+                    message: 'action must be one of the following values: activate, deactivate, pause, resume'
+                    errors:
+                    - 'action must be one of the following values: activate, deactivate, pause, resume'
+                alreadyActive:
+                  summary: Activate an active workflow
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: Workflow is already active
+                    errors:
+                    - Workflow is already active
+                cannotActivate:
+                  summary: Activate a completed workflow
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Cannot activate workflow with status: completed'
+                    errors:
+                    - 'Cannot activate workflow with status: completed'
+                cannotPause:
+                  summary: Pause a workflow that is not active
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Cannot pause workflow with status: draft'
+                    errors:
+                    - 'Cannot pause workflow with status: draft'
+                cannotResume:
+                  summary: Resume a workflow that is not paused
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Cannot resume workflow with status: active'
+                    errors:
+                    - 'Cannot resume workflow with status: active'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -417,21 +639,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden - workflow does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Workflow not found.
           content:
@@ -443,8 +655,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Workflow not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Workflow with ID Hk3pW9zQe1LmRt not found
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -456,34 +671,112 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
+                    errors: []
+        '422':
+          description: 'Unprocessable: `activate` ran the pre-activation checks and the workflow failed them. data.errors lists what to fix; data.warnings lists non-blocking issues.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                activationChecksFailed:
+                  summary: 422 Unprocessable Entity
+                  value:
+                    statusCode: 422
+                    error: true
+                    success: false
+                    data:
+                      errors:
+                      - type: PHONE_NUMBER_MISSING
+                        node_id: Rt5vN8kQ2wLz7x
+                        node_label: Call lead
+                        detail: VoiceCall node "Call lead" has no phone number configured
+                      warnings: []
+                    message: Workflow cannot be activated due to validation errors. Please fix the issues listed and try again.
+                    errors: []
       security:
       - bearer: []
       tags:
       - Workflows
 components:
   schemas:
+    UpdateWorkflowStatusRequest:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+          - activate
+          - deactivate
+          - pause
+          - resume
+          description: activate validates the workflow, sets it active and starts leads without an execution; deactivate and pause set it paused, which stops new lead starts and holds queued calls until it is active again, but does not stop leads already in a step from advancing; resume sets a paused workflow active without starting leads added while paused.
+          example: activate
+      required:
+      - action
     ErrorResponse:
       type: object
+      description: Error body on endpoints without response filtering.
       properties:
         statusCode:
           type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
+          example: 404
         error:
+          type: boolean
+          enum:
+          - true
+        success:
+          type: boolean
+          enum:
+          - false
+        data:
+          oneOf:
+          - type: object
+            properties:
+              code:
+                type: string
+                description: Machine-readable refusal code.
+          - type: array
+            items: {}
+          description: For a coded refusal, an object with code and the details listed for that code. Otherwise an empty array.
+        message:
           type: string
-          example: Bad Request
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation messages for a 400. Empty for other errors.
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
       required:
       - statusCode
-      - message
       - error
+      - success
+      - data
+      - message
+      - errors
   securitySchemes:
     bearer:
       scheme: bearer

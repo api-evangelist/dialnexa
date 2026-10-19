@@ -1,0 +1,213 @@
+openapi: 3.2.0
+info:
+  title: DialNexa Authentication API
+  description: Public `/v1` REST API for the DialNexa voice AI platform.
+  version: 1.0.0
+servers:
+- url: https://api.dialnexa.com
+  description: DialNexa production API
+security:
+- bearer: []
+tags:
+- name: Authentication
+paths:
+  /v1/auth/validate:
+    get:
+      operationId: validateApiKey
+      summary: Validate API Key
+      description: Checks a Bearer API key and returns its key and workspace metadata without creating resources or placing calls. Dashboard cookie sessions are not accepted.
+      tags:
+      - Authentication
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: boolean
+                  statusCode:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      valid:
+                        type: boolean
+                        enum:
+                        - true
+                      key:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          name:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          expires_at:
+                            type:
+                            - string
+                            - 'null'
+                            format: date-time
+                        required:
+                        - id
+                        - name
+                        - created_at
+                        - expires_at
+                      organization:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                        required:
+                        - id
+                      access_type:
+                        type: string
+                        enum:
+                        - private
+                    required:
+                    - valid
+                    - key
+                    - organization
+                    - access_type
+                  timestamp:
+                    type: string
+                    format: date-time
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+              examples:
+                success:
+                  value:
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      valid: true
+                      key:
+                        id: k7x2m9q4wz1abc
+                        name: CI Pipeline Key
+                        created_at: '2026-01-10T08:30:00.000Z'
+                        expires_at: null
+                      organization:
+                        id: o14XKPP84rt22g
+                      access_type: private
+                    timestamp: '2026-09-07T06:00:00.000Z'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: Always no-store.
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
+                missingKey:
+                  summary: No Authorization header
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: Path not allowed for this request type
+                    errors: []
+                malformedHeader:
+                  summary: Authorization header without the Bearer scheme
+                  value:
+                    statusCode: 401
+                    error: true
+                    success: false
+                    data: []
+                    message: API key required
+                    errors: []
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      description: Error body on endpoints without response filtering.
+      properties:
+        statusCode:
+          type: integer
+          example: 404
+        error:
+          type: boolean
+          enum:
+          - true
+        success:
+          type: boolean
+          enum:
+          - false
+        data:
+          oneOf:
+          - type: object
+            properties:
+              code:
+                type: string
+                description: Machine-readable refusal code.
+          - type: array
+            items: {}
+          description: For a coded refusal, an object with code and the details listed for that code. Otherwise an empty array.
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation messages for a 400. Empty for other errors.
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
+      required:
+      - statusCode
+      - error
+      - success
+      - data
+      - message
+      - errors
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http

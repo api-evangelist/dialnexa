@@ -32,7 +32,12 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: CSV or Excel file with leads data
+                  description: CSV, XLSX, or XLS file, at most 10 MB (10485760 bytes). The part's Content-Type must be text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet or application/vnd.ms-excel, and the file name must end in .csv, .xlsx or .xls.
+                tags:
+                  type: string
+                  description: Optional comma- or pipe-separated labels for every lead. Unioned with the reserved tags column, normalized to lowercase, at most 20 tags per lead and 40 characters per tag.
+              required:
+              - file
             examples:
               request:
                 summary: Upload workflow leads file
@@ -45,16 +50,126 @@ paths:
             application/json:
               examples:
                 success:
-                  summary: Successful response
+                  summary: All rows created
                   value:
+                    success: true
+                    error: false
                     statusCode: 201
-                    message: Leads uploaded successfully
+                    message: Success
                     data:
-                      '+919876543210':
-                      - lead_abc123
-                    count: 1
+                      statusCode: 201
+                      message: Leads uploaded successfully
+                      data:
+                        '+919876543210':
+                        - lead_abc123
+                        '+919123456789':
+                        - lead_def456
+                      count: 2
+                      tags:
+                      - priority
+                      dnd_skipped_count: 0
+                    timestamp: '2026-09-07T06:00:00.000Z'
+                partial:
+                  summary: Some rows failed
+                  value:
+                    success: true
+                    error: false
+                    statusCode: 201
+                    message: Success
+                    data:
+                      statusCode: 201
+                      message: Leads uploaded with 2 row(s) failed.
+                      data:
+                        '+919876543210':
+                        - lead_abc123
+                        '+919123456789':
+                        - lead_def456
+                      count: 2
+                      tags: []
+                      errors:
+                      - 'Row 1 (phone: +919876543210): Phone number phn_abc123 not found or not active for VoiceCall node Rt5vN8kQ2wLz7x'
+                      - 'Row 2 (phone: +919123456789): Phone number phn_abc123 not found or not active for VoiceCall node Rt5vN8kQ2wLz7x'
+                      unused_columns:
+                      - product
+                      allowed_columns:
+                      - customer_name
+                      dnd_skipped_count: 0
+                    timestamp: '2026-09-07T06:00:00.000Z'
+              schema:
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: object
+                    properties:
+                      statusCode:
+                        type: number
+                        example: 201
+                      message:
+                        type: string
+                        example: Leads uploaded successfully
+                        description: '`Leads uploaded successfully`, or `Leads uploaded with N row(s) failed.` when `errors` is present.'
+                      data:
+                        type: object
+                        description: Created lead IDs grouped by the phone number exactly as it appears in the file.
+                        additionalProperties:
+                          type: array
+                          items:
+                            type: string
+                            example: lead_abc123
+                      count:
+                        type: number
+                        example: 1
+                        description: Number of leads created.
+                      tags:
+                        type: array
+                        items:
+                          type: string
+                        description: Every tag applied in this upload.
+                      errors:
+                        type: array
+                        items:
+                          type: string
+                        description: 'Present only when some rows failed, one message per row: the lead could not be saved, or, on an active workflow, it was saved (and is in data and count) but its execution could not start.'
+                      unused_columns:
+                        type: array
+                        items:
+                          type: string
+                        description: Present only when some data columns are not referenced by any node or agent prompt in the workflow. The reserved notes and agent_transfer_destinations columns can also be listed.
+                      allowed_columns:
+                        type: array
+                        items:
+                          type: string
+                        description: 'Present with unused_columns: the variable names the workflow does reference.'
+                      dnd_skipped_count:
+                        type: integer
+                        example: 0
+                        description: Rows left out because their number is on the workspace's DND list. 0 when none was.
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
-          description: Bad request
+          description: Missing file, wrong extension or MIME type, malformed CSV, no row with a phone number, invalid notes, transfer destinations or tags, or rows whose phone number fails destination validation.
           content:
             application/json:
               schema:
@@ -64,8 +179,40 @@ paths:
                   summary: 400 Bad Request
                   value:
                     statusCode: 400
+                    error: true
+                    success: false
+                    data: []
                     message: File must be a CSV or Excel file (.csv, .xlsx, .xls)
-                    error: Bad Request
+                    errors: []
+                allNumbersOnDnd:
+                  summary: Every number is on the DND list
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: All 2 numbers in this file are on your workspace's DND list, so there is nothing to call.
+                    errors:
+                    - All 2 numbers in this file are on your workspace's DND list, so there is nothing to call.
+                rowValidation:
+                  summary: Rows whose numbers fail validation
+                  value:
+                    statusCode: 400
+                    error: true
+                    success: false
+                    data: []
+                    message: '1 phone number failed validation.
+
+                      Phone Number "12345" Could Not Be Parsed. Use International Format Such As +447700900123. (row: 3)'
+                    errors:
+                    - 'Phone Number "12345" Could Not Be Parsed. Use International Format Such As +447700900123. (row: 3)'
+                    validation_errors:
+                    - error: Phone Number "12345" Could Not Be Parsed. Use International Format Such As +447700900123.
+                      rows:
+                      - 3
+                      phone_numbers:
+                      - '12345'
+                    invalid_row_count: 1
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -77,8 +224,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Workflow not found.
           content:
@@ -90,8 +240,27 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Workflow not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Workflow with ID Hk3pW9zQe1LmRt not found
+                    errors: []
+        '413':
+          description: The uploaded file is larger than 10 MB.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 413 Payload Too Large
+                  value:
+                    statusCode: 413
+                    error: true
+                    success: false
+                    data: []
+                    message: File too large
+                    errors: []
         '500':
           description: Internal server error
           content:
@@ -103,27 +272,17 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - workflow does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this workflow
-                    error: Forbidden
+                    error: true
+                    success: false
+                    data: []
+                    message: Something went wrong while processing your request.
+                    errors: []
       security:
       - bearer: []
       summary: Upload Workflow Leads
       tags:
       - Workflow Leads
-      description: Uploads and enrolls leads in one workflow from a supported file.
+      description: 'Uploads and enrolls leads in one workflow from a CSV or Excel file. On a `draft` workflow the upload replaces every existing lead; on an `active` or `paused` workflow it adds to them. Leads uploaded to an `active` workflow start immediately; leads uploaded to a `paused` workflow start only when the workflow is activated again with `activate`. A 201 can be a partial success: rows listed in `errors` either could not be saved or, on an `active` workflow, were saved but could not start; a saved row is still counted in `data` and `count`.'
     get:
       operationId: listWorkflowLeads
       parameters:
@@ -139,7 +298,7 @@ paths:
         in: query
         description: Comma-separated lead IDs to filter
         schema:
-          example: id1,id2
+          example: lead_abc123,lead_def456
           type: string
       responses:
         '200':
@@ -148,53 +307,167 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
                   statusCode:
-                    type: number
+                    type: integer
                     example: 200
                   message:
                     type: string
-                    example: Leads fetched successfully
+                    example: Success
                   data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          example: lead_abc123
-                        phone_number:
-                          type: string
-                          example: '+919876543210'
-                        dynamic_variables:
+                    type: object
+                    properties:
+                      statusCode:
+                        type: number
+                        example: 200
+                      message:
+                        type: string
+                        example: Leads fetched successfully
+                      data:
+                        type: array
+                        items:
                           type: object
-                          example:
-                            name: John
-                            company: Acme
-                        status:
-                          type: string
-                          example: pending
-                        createdAt:
-                          type: string
-                          format: date-time
-                  count:
-                    type: number
-                    example: 42
+                          properties:
+                            id:
+                              type: string
+                              example: lead_abc123
+                            workflow_id:
+                              type: string
+                              description: Raw workflow ID, without the workflow_ prefix.
+                              example: Hk3pW9zQe1LmRt
+                            organization_id:
+                              type: string
+                              example: o14XKPP84rt22g
+                            phone_number:
+                              type: string
+                              description: As it appeared in the uploaded file.
+                              example: '+919876543210'
+                            dynamic_variables:
+                              type: array
+                              description: One entry per non-empty data cell of the uploaded file. Blank cells add no entry; values are trimmed and inner whitespace is collapsed.
+                              items:
+                                type: object
+                                properties:
+                                  key:
+                                    type: string
+                                    example: customer_name
+                                  value:
+                                    type: string
+                                    example: Priya Sharma
+                                  fallback:
+                                    type: string
+                                required:
+                                - key
+                                - value
+                            notes:
+                              type:
+                              - object
+                              - 'null'
+                              description: 'The reserved notes column: a JSON object of at most 15 keys, or plain text stored as {"text": "<cell>"}.'
+                            tags:
+                              type:
+                              - array
+                              - 'null'
+                              items:
+                                type: string
+                                maxLength: 40
+                              maxItems: 20
+                              description: Null on leads uploaded before tags existed.
+                            is_deleted:
+                              type: boolean
+                              example: false
+                            status:
+                              type: string
+                              enum:
+                              - pending
+                              - active
+                              - completed
+                              - dropped
+                              - failed
+                              - dnd_blocked
+                              example: active
+                            current_node_id:
+                              type:
+                              - string
+                              - 'null'
+                            entry_time:
+                              type:
+                              - string
+                              - 'null'
+                              format: date-time
+                            completed_at:
+                              type:
+                              - string
+                              - 'null'
+                              format: date-time
+                            createdAt:
+                              type: string
+                              format: date-time
+                            updatedAt:
+                              type: string
+                              format: date-time
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      count:
+                        type: number
+                        example: 42
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
+                    success: true
+                    error: false
                     statusCode: 200
-                    message: Leads fetched successfully
+                    message: Success
                     data:
-                    - id: lead_abc123
-                      phone_number: '+919876543210'
-                      dynamic_variables:
-                        customer_name: Priya Sharma
-                        loan_amount: '500000'
-                      status: pending
-                      createdAt: '2026-07-03T10:30:00.000Z'
-                    count: 1
+                      statusCode: 200
+                      message: Leads fetched successfully
+                      data:
+                      - id: lead_abc123
+                        workflow_id: Hk3pW9zQe1LmRt
+                        organization_id: o14XKPP84rt22g
+                        phone_number: '+919876543210'
+                        dynamic_variables:
+                        - key: customer_name
+                          value: Priya Sharma
+                        - key: loan_amount
+                          value: '500000'
+                        notes: null
+                        tags:
+                        - priority
+                        is_deleted: false
+                        status: active
+                        current_node_id: Rt5vN8kQ2wLz7x
+                        entry_time: '2026-07-03T10:31:00.000Z'
+                        completed_at: null
+                        createdAt: '2026-07-03T10:30:00.000Z'
+                        updatedAt: '2026-07-03T10:30:00.000Z'
+                        created_at: '2026-07-03T10:30:00.000Z'
+                        updated_at: '2026-07-03T10:30:00.000Z'
+                      count: 1
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -206,21 +479,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '404':
-          description: Workflow not found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 404 Not Found
-                  value:
-                    statusCode: 404
-                    message: Workflow not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '500':
           description: Internal server error
           content:
@@ -232,27 +495,17 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - workflow does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this workflow
-                    error: Forbidden
+                    error: true
+                    success: false
+                    data: []
+                    message: 'Error fetching workflow leads: Internal server error'
+                    errors: []
       security:
       - bearer: []
       summary: List Workflow Leads
       tags:
       - Workflow Leads
-      description: Returns leads enrolled in one workflow.
+      description: Returns the leads enrolled in one workflow, newest first, with each lead's latest execution status. An unknown workflow ID returns an empty list.
   /v1/workflows/{workflowId}/leads/variable-keys:
     get:
       operationId: listWorkflowLeadVariableKeys
@@ -273,13 +526,63 @@ paths:
                 success:
                   summary: Successful response
                   value:
+                    success: true
+                    error: false
                     statusCode: 200
-                    message: Variable keys fetched successfully
+                    message: Success
                     data:
-                      keys:
-                      - customer_name
-                      - loan_amount
-                      - product
+                      statusCode: 200
+                      message: Variable keys fetched successfully
+                      data:
+                        keys:
+                        - customer_name
+                        - loan_amount
+                        - product
+                    timestamp: '2026-09-07T06:00:00.000Z'
+              schema:
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: object
+                    properties:
+                      statusCode:
+                        type: number
+                        example: 200
+                      message:
+                        type: string
+                        example: Variable keys fetched successfully
+                      data:
+                        type: object
+                        properties:
+                          keys:
+                            type: array
+                            items:
+                              type: string
+                            description: Sorted, de-duplicated keys.
+                  timestamp:
+                    type: string
+                    format: date-time
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -291,53 +594,17 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '404':
-          description: Workflow not found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 404 Not Found
-                  value:
-                    statusCode: 404
-                    message: Workflow not found
-                    error: Not Found
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 500 Internal Server Error
-                  value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - workflow does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this workflow
-                    error: Forbidden
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
       security:
       - bearer: []
       summary: Get Workflow Lead Variables
       tags:
       - Workflow Leads
-      description: Returns dynamic variable keys discovered across leads in one workflow.
+      description: Returns the sorted dynamic variable keys carried by the leads currently enrolled in one workflow. An unknown workflow ID returns an empty list.
   /v1/workflows/{workflowId}/leads/{id}:
     delete:
       operationId: deleteWorkflowLead
@@ -365,8 +632,50 @@ paths:
                 success:
                   summary: Successful response
                   value:
+                    success: true
+                    error: false
                     statusCode: 200
-                    message: Lead removed successfully
+                    message: Success
+                    data:
+                      statusCode: 200
+                      message: Lead soft-deleted successfully
+                    timestamp: '2026-09-07T06:00:00.000Z'
+              schema:
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: object
+                    properties:
+                      statusCode:
+                        type: number
+                        example: 200
+                      message:
+                        type: string
+                        description: Confirmation text.
+                  timestamp:
+                    type: string
+                    format: date-time
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -378,8 +687,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Lead not found
           content:
@@ -391,8 +703,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Workflow lead not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Workflow lead with ID Bv7nC2xKs5DqYw not found
+                    errors: []
         '500':
           description: Internal server error
           content:
@@ -404,27 +719,17 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - workflow does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this workflow
-                    error: Forbidden
+                    errors: []
       security:
       - bearer: []
       summary: Delete Workflow Lead
       tags:
       - Workflow Leads
-      description: Removes one lead from a workflow and prevents it from advancing to later steps.
+      description: Removes one lead from a workflow. The lead leaves the lead list and no longer matches inbound calls. Steps already scheduled or in progress for the lead are not cancelled and can still place a call.
   /v1/workflows/{workflowId}/leads/{id}/history:
     get:
       operationId: getWorkflowLeadHistory
@@ -452,25 +757,270 @@ paths:
                 success:
                   summary: Successful response
                   value:
+                    success: true
+                    error: false
                     statusCode: 200
-                    message: Lead history fetched successfully
+                    message: Success
                     data:
-                      lead:
-                        id: lead_abc123
-                        phone_number: '+919876543210'
-                        dynamic_variables:
-                          customer_name: Priya Sharma
-                          loan_amount: '500000'
-                        status: pending
-                        createdAt: '2026-07-03T10:30:00.000Z'
-                      history:
-                      - node_id: node_start
-                        node_type: VOICE_CALL
-                        label: Initial call
-                        status: completed
-                        call_id: call_abc123
-                        started_at: '2026-07-03T10:30:00.000Z'
-                        ended_at: '2026-07-03T10:32:00.000Z'
+                      statusCode: 200
+                      message: Lead history fetched successfully
+                      data:
+                        lead:
+                          id: lead_abc123
+                          phone_number: '+919876543210'
+                          dynamic_variables:
+                          - key: customer_name
+                            value: Priya Sharma
+                          - key: loan_amount
+                            value: '500000'
+                          notes: null
+                        execution:
+                          id: Ex8nT4vQ1mLz6c
+                          current_node_id: Wq3mK7pL9xNz2b
+                          status: completed
+                          entry_time: '2026-07-03T10:31:00.000Z'
+                        history:
+                        - id: Hs2kP9wQ4nLx7v
+                          from_node: null
+                          to_node:
+                            id: Rt5vN8kQ2wLz7x
+                            label: First call
+                            node_type: VOICE_CALL
+                            config:
+                              phone_number_id: phn_abc123
+                          transition_reason: Entered workflow at entry node
+                          metadata: {}
+                          transitioned_at: '2026-07-03T10:31:00.000Z'
+                        - id: Hs5mR3tY8bKw1q
+                          from_node:
+                            id: Rt5vN8kQ2wLz7x
+                            label: First call
+                            node_type: VOICE_CALL
+                            config:
+                              phone_number_id: phn_abc123
+                          to_node:
+                            id: Wq3mK7pL9xNz2b
+                            label: Converted
+                            node_type: CONVERTED
+                            config: {}
+                          transition_reason: 'Call COMPLETED: completed'
+                          metadata:
+                            call_id: Cl7vB2nM5xQz9k
+                            call_status: completed
+                          transitioned_at: '2026-07-03T10:36:10.000Z'
+                        - id: Hs8tW1nB6vQz3m
+                          from_node:
+                            id: Wq3mK7pL9xNz2b
+                            label: Converted
+                            node_type: CONVERTED
+                            config: {}
+                          to_node:
+                            id: Wq3mK7pL9xNz2b
+                            label: Converted
+                            node_type: CONVERTED
+                            config: {}
+                          transition_reason: Reached CONVERTED terminal node
+                          metadata: {}
+                          transitioned_at: '2026-07-03T10:36:10.000Z'
+                        all_nodes:
+                        - id: Rt5vN8kQ2wLz7x
+                          label: First call
+                          node_type: VOICE_CALL
+                          config:
+                            phone_number_id: phn_abc123
+                            phone_number_display: '+919876500000'
+                          position_x: 100
+                          position_y: 100
+                        - id: Wq3mK7pL9xNz2b
+                          label: Converted
+                          node_type: CONVERTED
+                          config: {}
+                          position_x: 400
+                          position_y: 100
+                        all_edges:
+                        - id: Ed4jH6kL2mNp8r
+                          from_node_id: Rt5vN8kQ2wLz7x
+                          to_node_id: Wq3mK7pL9xNz2b
+                          label: COMPLETED
+                    timestamp: '2026-09-07T06:00:00.000Z'
+              schema:
+                type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Success
+                  data:
+                    type: object
+                    properties:
+                      statusCode:
+                        type: number
+                        example: 200
+                      message:
+                        type: string
+                        example: Lead history fetched successfully
+                      data:
+                        type: object
+                        properties:
+                          lead:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                example: lead_abc123
+                              phone_number:
+                                type: string
+                              dynamic_variables:
+                                type: array
+                                description: One entry per non-empty data cell of the uploaded file. Blank cells add no entry; values are trimmed and inner whitespace is collapsed.
+                                items:
+                                  type: object
+                                  properties:
+                                    key:
+                                      type: string
+                                      example: customer_name
+                                    value:
+                                      type: string
+                                      example: Priya Sharma
+                                    fallback:
+                                      type: string
+                                  required:
+                                  - key
+                                  - value
+                              notes:
+                                type:
+                                - object
+                                - 'null'
+                                description: 'The reserved notes column: a JSON object of at most 15 keys, or plain text stored as {"text": "<cell>"}.'
+                          execution:
+                            type:
+                            - object
+                            - 'null'
+                            properties:
+                              id:
+                                type: string
+                              current_node_id:
+                                type: string
+                              status:
+                                type: string
+                                enum:
+                                - active
+                                - completed
+                                - dropped
+                                - failed
+                                - dnd_blocked
+                              entry_time:
+                                type: string
+                                format: date-time
+                          history:
+                            type: array
+                            description: Transitions, oldest first. IDs are raw, without prefixes.
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                from_node:
+                                  type:
+                                  - object
+                                  - 'null'
+                                  properties:
+                                    id:
+                                      type: string
+                                    label:
+                                      type: string
+                                    node_type:
+                                      type: string
+                                      enum:
+                                      - VOICE_CALL
+                                      - CONDITIONAL
+                                      - TIME
+                                      - APPLICATION
+                                      - CUSTOM_FUNCTION
+                                      - CONVERTED
+                                      - DROPPED
+                                    config:
+                                      type: object
+                                to_node:
+                                  type:
+                                  - object
+                                  - 'null'
+                                  properties:
+                                    id:
+                                      type: string
+                                    label:
+                                      type: string
+                                    node_type:
+                                      type: string
+                                      enum:
+                                      - VOICE_CALL
+                                      - CONDITIONAL
+                                      - TIME
+                                      - APPLICATION
+                                      - CUSTOM_FUNCTION
+                                      - CONVERTED
+                                      - DROPPED
+                                    config:
+                                      type: object
+                                transition_reason:
+                                  type: string
+                                metadata:
+                                  type: object
+                                  description: 'After a Voice Call node: call_id (raw call ID) and call_status.'
+                                transitioned_at:
+                                  type: string
+                                  format: date-time
+                          all_nodes:
+                            type: array
+                            description: Every node in the workflow. Voice Call node config also carries phone_number_display.
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                label:
+                                  type: string
+                                node_type:
+                                  type: string
+                                config:
+                                  type: object
+                                position_x:
+                                  type: number
+                                position_y:
+                                  type: number
+                          all_edges:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                from_node_id:
+                                  type: string
+                                to_node_id:
+                                  type: string
+                                label:
+                                  type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -482,8 +1032,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Lead not found
           content:
@@ -495,8 +1048,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Workflow lead not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Lead Bv7nC2xKs5DqYw not found in workflow Hk3pW9zQe1LmRt
+                    errors: []
         '500':
           description: Internal server error
           content:
@@ -508,21 +1064,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - workflow does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this workflow
-                    error: Forbidden
+                    errors: []
       security:
       - bearer: []
       summary: Get Lead Execution History
@@ -533,24 +1079,63 @@ components:
   schemas:
     ErrorResponse:
       type: object
+      description: Error body on endpoints without response filtering.
       properties:
         statusCode:
           type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
+          example: 404
         error:
+          type: boolean
+          enum:
+          - true
+        success:
+          type: boolean
+          enum:
+          - false
+        data:
+          oneOf:
+          - type: object
+            properties:
+              code:
+                type: string
+                description: Machine-readable refusal code.
+          - type: array
+            items: {}
+          description: For a coded refusal, an object with code and the details listed for that code. Otherwise an empty array.
+        message:
           type: string
-          example: Bad Request
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation messages for a 400. Empty for other errors.
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
       required:
       - statusCode
-      - message
       - error
+      - success
+      - data
+      - message
+      - errors
   securitySchemes:
     bearer:
       scheme: bearer

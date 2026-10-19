@@ -13,7 +13,7 @@ tags:
 paths:
   /v1/user-webhooks:
     post:
-      description: Registers a new webhook URL for your organization. The secret is returned only once at creation - store it securely. For v1 call-ended deliveries, DialNexa sends a plain JSON body and an x-nexa-signature header in the format sha256= computed with HMAC-SHA256 over the raw request body.
+      description: Registers a webhook URL for your workspace. The response is the only one that returns the plain secret; store it securely. DialNexa sends one signed POST when a call that was not started by a batch call ends, with no retry and no timeout. The x-nexa-signature header is sha256=, an HMAC-SHA256 of the raw request body with your secret.
       operationId: createWebhook
       parameters: []
       requestBody:
@@ -38,46 +38,105 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 201
                   message:
                     type: string
-                    example: Webhook created successfully
-                  webhook:
+                    example: Success
+                  data:
                     type: object
                     properties:
-                      id:
+                      message:
                         type: string
-                        example: webhook_abc123
-                      url:
-                        type: string
-                        example: https://webhook.site/your-endpoint
-                      events:
-                        type: array
-                        items:
-                          type: string
-                        example:
-                        - call.completed
-                        - call.failed
-                      is_active:
-                        type: boolean
-                        example: true
-                      secret:
-                        type: string
-                        example: mySuperSecret
-                        description: Shown once at creation only
-                      createdAt:
-                        type: string
-                        format: date-time
+                        example: Webhook created successfully
+                      webhook:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: webhook_c9v3nz8rq4pmxa
+                            description: Webhook ID with the `webhook_` prefix.
+                          org_id:
+                            type: string
+                            example: o14XKPP84rt22g
+                            description: Owning workspace ID, without the `org_` prefix.
+                          url:
+                            type: string
+                            format: uri
+                            example: https://example.com/dialnexa/webhook
+                          events:
+                            type: array
+                            items:
+                              type: string
+                            example:
+                            - call.completed
+                            description: Stored and returned as sent. It does not filter deliveries today.
+                          is_active:
+                            type: boolean
+                            example: true
+                            description: Inactive subscriptions receive no deliveries.
+                          secret:
+                            type: string
+                            example: replace-with-a-long-random-secret
+                            description: The plain secret you sent. Shown only in this response.
+                          last_triggered_at:
+                            type:
+                            - string
+                            - 'null'
+                            format: date-time
+                            description: When a delivery was last attempted, whether or not your endpoint accepted it.
+                          is_deleted:
+                            type: boolean
+                            example: false
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: webhook_abc123
-                    url: https://example.com/dialnexa/webhook
-                    events:
-                    - call.completed
-                    is_active: true
-                    createdAt: '2026-07-03T10:30:00.000Z'
+                    success: true
+                    error: false
+                    statusCode: 201
+                    message: Success
+                    data:
+                      message: Webhook created successfully
+                      webhook:
+                        id: webhook_c9v3nz8rq4pmxa
+                        org_id: o14XKPP84rt22g
+                        url: https://example.com/dialnexa/webhook
+                        events:
+                        - call.completed
+                        is_active: true
+                        secret: replace-with-a-long-random-secret
+                        last_triggered_at: null
+                        is_deleted: false
+                        created_at: '2026-07-03T10:30:00.000Z'
+                        updated_at: '2026-07-03T10:30:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '400':
           description: Bad request - missing required fields or invalid URL.
           content:
@@ -89,8 +148,12 @@ paths:
                   summary: 400 Bad Request
                   value:
                     statusCode: 400
-                    message: url must be a valid URL
-                    error: Bad Request
+                    error: true
+                    success: false
+                    data: []
+                    message: url must be a URL address
+                    errors:
+                    - url must be a URL address
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -102,8 +165,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -115,41 +181,31 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    errors: []
       security:
       - bearer: []
       summary: Create Webhook
       tags:
       - Webhooks
     get:
-      description: Returns paginated webhook registrations. Secrets are masked in all list responses.
+      description: Returns the workspace's webhook subscriptions, newest first, with page, limit, total and totalPages. Secrets are always masked as ********.
       operationId: listWebhooks
       parameters:
       - name: limit
         required: false
         in: query
-        description: 'Results per page (default: 10)'
+        description: 'Results per page, a whole number of 1 or more (default: 10). Not validated: 0 or a negative value gives an unusable response or an error.'
         schema:
           example: 10
           type: number
       - name: page
         required: false
         in: query
-        description: 'Page number (default: 1)'
+        description: 'Page number, a whole number of 1 or more (default: 1).'
         schema:
           example: 1
           type: number
@@ -160,63 +216,123 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
                   message:
                     type: string
-                    example: Webhooks fetched successfully
-                  webhooks:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          example: webhook_abc123
-                        url:
-                          type: string
-                          example: https://webhook.site/your-endpoint
-                        events:
-                          type: array
-                          items:
-                            type: string
-                          example:
-                          - call.completed
-                        is_active:
-                          type: boolean
-                          example: true
-                        secret:
-                          type: string
-                          example: '********'
-                          description: Always masked in list responses
-                        createdAt:
-                          type: string
-                          format: date-time
-                  page:
-                    type: number
-                    example: 1
-                  limit:
-                    type: number
-                    example: 10
-                  total:
-                    type: number
-                    example: 5
-                  totalPages:
-                    type: number
-                    example: 1
+                    example: Success
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Webhooks fetched successfully
+                      webhooks:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: webhook_c9v3nz8rq4pmxa
+                              description: Webhook ID with the `webhook_` prefix.
+                            org_id:
+                              type: string
+                              example: o14XKPP84rt22g
+                              description: Owning workspace ID, without the `org_` prefix.
+                            url:
+                              type: string
+                              format: uri
+                              example: https://example.com/dialnexa/webhook
+                            events:
+                              type: array
+                              items:
+                                type: string
+                              example:
+                              - call.completed
+                              description: Stored and returned as sent. It does not filter deliveries today.
+                            is_active:
+                              type: boolean
+                              example: true
+                              description: Inactive subscriptions receive no deliveries.
+                            secret:
+                              type: string
+                              example: '********'
+                              description: Always `********`; only Create Webhook returns the secret.
+                            last_triggered_at:
+                              type:
+                              - string
+                              - 'null'
+                              format: date-time
+                              description: When a delivery was last attempted, whether or not your endpoint accepted it.
+                            is_deleted:
+                              type: boolean
+                              example: false
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      page:
+                        type: number
+                        example: 1
+                      limit:
+                        type: number
+                        example: 10
+                      total:
+                        type: number
+                        example: 1
+                      totalPages:
+                        type: number
+                        example: 1
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    total: 1
-                    page: 1
-                    limit: 10
-                    webhooks:
-                    - id: webhook_abc123
-                      url: https://example.com/dialnexa/webhook
-                      events:
-                      - call.completed
-                      is_active: true
-                      createdAt: '2026-07-03T10:30:00.000Z'
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      message: Webhooks fetched successfully
+                      webhooks:
+                      - id: webhook_c9v3nz8rq4pmxa
+                        org_id: o14XKPP84rt22g
+                        url: https://example.com/dialnexa/webhook
+                        events:
+                        - call.completed
+                        is_active: true
+                        secret: '********'
+                        last_triggered_at: null
+                        is_deleted: false
+                        created_at: '2026-07-03T10:30:00.000Z'
+                        updated_at: '2026-07-03T10:30:00.000Z'
+                      page: 1
+                      limit: 10
+                      total: 1
+                      totalPages: 1
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -228,8 +344,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -241,21 +360,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    errors: []
       security:
       - bearer: []
       summary: List Webhooks
@@ -263,15 +372,15 @@ paths:
       - Webhooks
   /v1/user-webhooks/{id}:
     patch:
-      description: Update URL, events, or active status. Partial updates supported.
+      description: Updates the URL, events, active flag, or signing secret. Only the fields you send change. The response masks the secret as ********. A new secret signs the next delivery; there is no overlap window.
       operationId: updateWebhook
       parameters:
       - name: id
         required: true
         in: path
-        description: Webhook ID
+        description: Webhook ID with the `webhook_` prefix, as returned by Create Webhook.
         schema:
-          example: webhook_abc123
+          example: webhook_c9v3nz8rq4pmxa
           type: string
       requestBody:
         required: true
@@ -291,38 +400,105 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
                   message:
                     type: string
-                    example: Webhook updated successfully
-                  webhook:
+                    example: Success
+                  data:
                     type: object
                     properties:
-                      id:
+                      message:
                         type: string
-                        example: webhook_abc123
-                      url:
-                        type: string
-                        example: https://webhook.site/new-endpoint
-                      events:
-                        type: array
-                        items:
-                          type: string
-                        example:
-                        - call.completed
-                      is_active:
-                        type: boolean
-                        example: false
+                        example: Webhook updated successfully
+                      webhook:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: webhook_c9v3nz8rq4pmxa
+                            description: Webhook ID with the `webhook_` prefix.
+                          org_id:
+                            type: string
+                            example: o14XKPP84rt22g
+                            description: Owning workspace ID, without the `org_` prefix.
+                          url:
+                            type: string
+                            format: uri
+                            example: https://example.com/dialnexa/webhook
+                          events:
+                            type: array
+                            items:
+                              type: string
+                            example:
+                            - call.completed
+                            description: Stored and returned as sent. It does not filter deliveries today.
+                          is_active:
+                            type: boolean
+                            example: true
+                            description: Inactive subscriptions receive no deliveries.
+                          secret:
+                            type: string
+                            example: '********'
+                            description: Always `********`; only Create Webhook returns the secret.
+                          last_triggered_at:
+                            type:
+                            - string
+                            - 'null'
+                            format: date-time
+                            description: When a delivery was last attempted, whether or not your endpoint accepted it.
+                          is_deleted:
+                            type: boolean
+                            example: false
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: webhook_abc123
-                    url: https://example.com/dialnexa/webhook
-                    events:
-                    - call.completed
-                    is_active: false
-                    createdAt: '2026-07-03T10:30:00.000Z'
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      message: Webhook updated successfully
+                      webhook:
+                        id: webhook_c9v3nz8rq4pmxa
+                        org_id: o14XKPP84rt22g
+                        url: https://example.com/dialnexa/webhook
+                        events:
+                        - call.completed
+                        is_active: false
+                        secret: '********'
+                        last_triggered_at: null
+                        is_deleted: false
+                        created_at: '2026-07-03T10:30:00.000Z'
+                        updated_at: '2026-07-04T08:00:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '400':
           description: Bad request - invalid fields.
           content:
@@ -334,8 +510,12 @@ paths:
                   summary: 400 Bad Request
                   value:
                     statusCode: 400
-                    message: url must be a valid URL
-                    error: Bad Request
+                    error: true
+                    success: false
+                    data: []
+                    message: url must be a URL address
+                    errors:
+                    - url must be a URL address
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -347,8 +527,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Webhook not found.
           content:
@@ -360,8 +543,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Webhook not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Webhook not found for the given ID and organization
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -373,21 +559,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    errors: []
       security:
       - bearer: []
       summary: Update Webhook
@@ -400,9 +576,9 @@ paths:
       - name: id
         required: true
         in: path
-        description: Webhook ID
+        description: Webhook ID with the `webhook_` prefix, as returned by Create Webhook.
         schema:
-          example: webhook_abc123
+          example: webhook_c9v3nz8rq4pmxa
           type: string
       responses:
         '200':
@@ -411,19 +587,52 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
                   message:
                     type: string
-                    example: Webhook deleted successfully
-                  id:
+                    example: Success
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Webhook deleted successfully
+                      id:
+                        type: string
+                        example: webhook_c9v3nz8rq4pmxa
+                  timestamp:
                     type: string
-                    example: webhook_abc123
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
                     success: true
-                    message: Webhook deleted successfully
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      message: Webhook deleted successfully
+                      id: webhook_c9v3nz8rq4pmxa
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -435,8 +644,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Webhook not found.
           content:
@@ -448,8 +660,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Webhook not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Webhook not found for the given ID and organization
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -461,21 +676,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    errors: []
       security:
       - bearer: []
       summary: Delete Webhook
@@ -487,9 +692,9 @@ paths:
       - name: id
         required: true
         in: path
-        description: Webhook ID
+        description: Webhook ID with the `webhook_` prefix, as returned by Create Webhook.
         schema:
-          example: webhook_abc123
+          example: webhook_c9v3nz8rq4pmxa
           type: string
       responses:
         '200':
@@ -498,44 +703,105 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                - success
+                - error
+                - statusCode
+                - message
+                - data
+                - timestamp
                 properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                  error:
+                    type: boolean
+                    enum:
+                    - false
+                  statusCode:
+                    type: integer
+                    example: 200
                   message:
                     type: string
-                    example: Webhook fetched successfully
-                  webhook:
+                    example: Success
+                  data:
                     type: object
                     properties:
-                      id:
+                      message:
                         type: string
-                        example: webhook_abc123
-                      url:
-                        type: string
-                        example: https://webhook.site/your-endpoint
-                      events:
-                        type: array
-                        items:
-                          type: string
-                        example:
-                        - call.completed
-                      is_active:
-                        type: boolean
-                        example: true
-                      secret:
-                        type: string
-                        example: '********'
-                      createdAt:
-                        type: string
-                        format: date-time
+                        example: Webhook fetched successfully
+                      webhook:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: webhook_c9v3nz8rq4pmxa
+                            description: Webhook ID with the `webhook_` prefix.
+                          org_id:
+                            type: string
+                            example: o14XKPP84rt22g
+                            description: Owning workspace ID, without the `org_` prefix.
+                          url:
+                            type: string
+                            format: uri
+                            example: https://example.com/dialnexa/webhook
+                          events:
+                            type: array
+                            items:
+                              type: string
+                            example:
+                            - call.completed
+                            description: Stored and returned as sent. It does not filter deliveries today.
+                          is_active:
+                            type: boolean
+                            example: true
+                            description: Inactive subscriptions receive no deliveries.
+                          secret:
+                            type: string
+                            example: '********'
+                            description: Always `********`; only Create Webhook returns the secret.
+                          last_triggered_at:
+                            type:
+                            - string
+                            - 'null'
+                            format: date-time
+                            description: When a delivery was last attempted, whether or not your endpoint accepted it.
+                          is_deleted:
+                            type: boolean
+                            example: false
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: webhook_abc123
-                    url: https://example.com/dialnexa/webhook
-                    events:
-                    - call.completed
-                    is_active: true
-                    createdAt: '2026-07-03T10:30:00.000Z'
+                    success: true
+                    error: false
+                    statusCode: 200
+                    message: Success
+                    data:
+                      message: Webhook fetched successfully
+                      webhook:
+                        id: webhook_c9v3nz8rq4pmxa
+                        org_id: o14XKPP84rt22g
+                        url: https://example.com/dialnexa/webhook
+                        events:
+                        - call.completed
+                        is_active: true
+                        secret: '********'
+                        last_triggered_at: null
+                        is_deleted: false
+                        created_at: '2026-07-03T10:30:00.000Z'
+                        updated_at: '2026-07-03T10:30:00.000Z'
+                    timestamp: '2026-09-07T06:00:00.000Z'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
@@ -547,8 +813,11 @@ paths:
                   summary: 401 Unauthorized
                   value:
                     statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    error: true
+                    success: false
+                    data: []
+                    message: Invalid API key
+                    errors: []
         '404':
           description: Webhook not found.
           content:
@@ -560,8 +829,11 @@ paths:
                   summary: 404 Not Found
                   value:
                     statusCode: 404
-                    message: Webhook not found
-                    error: Not Found
+                    error: true
+                    success: false
+                    data: []
+                    message: Webhook not found for the given ID and organization
+                    errors: []
         '500':
           description: Internal server error.
           content:
@@ -573,21 +845,11 @@ paths:
                   summary: 500 Internal Server Error
                   value:
                     statusCode: 500
+                    error: true
+                    success: false
+                    data: []
                     message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    errors: []
       security:
       - bearer: []
       summary: Get Webhook Details
@@ -601,11 +863,13 @@ components:
       properties:
         url:
           type: string
+          format: uri
           example: https://webhook.site/updated-endpoint
           description: The new URL for the webhook.
         events:
+          minItems: 1
           example:
-          - order.paid
+          - call.completed
           description: Updated list of events.
           type: array
           items:
@@ -616,19 +880,79 @@ components:
           description: Whether the webhook is active.
         secret:
           type: string
-          example: newSecret
+          example: replace-with-a-new-long-random-secret
           description: New secret for signing payloads.
+    ErrorResponse:
+      type: object
+      description: Error body on endpoints without response filtering.
+      properties:
+        statusCode:
+          type: integer
+          example: 404
+        error:
+          type: boolean
+          enum:
+          - true
+        success:
+          type: boolean
+          enum:
+          - false
+        data:
+          oneOf:
+          - type: object
+            properties:
+              code:
+                type: string
+                description: Machine-readable refusal code.
+          - type: array
+            items: {}
+          description: For a coded refusal, an object with code and the details listed for that code. Otherwise an empty array.
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation messages for a 400. Empty for other errors.
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
+      required:
+      - statusCode
+      - error
+      - success
+      - data
+      - message
+      - errors
     CreateWebhookRequest:
       type: object
       properties:
         url:
           type: string
+          format: uri
           example: https://webhook.site/your-endpoint
           description: The URL to which webhook events will be sent.
         events:
+          minItems: 1
           example:
-          - order.paid
-          - order.failed
+          - call.completed
           description: List of events this webhook is subscribed to.
           type: array
           items:
@@ -639,32 +963,12 @@ components:
           description: Whether the webhook is active.
         secret:
           type: string
-          example: mySuperSecret
+          example: replace-with-a-long-random-secret
           description: Secret used to sign webhook payloads.
       required:
       - url
       - events
       - secret
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
   securitySchemes:
     bearer:
       scheme: bearer

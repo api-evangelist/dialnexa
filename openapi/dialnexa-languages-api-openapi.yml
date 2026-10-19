@@ -23,59 +23,59 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Languages'
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: lang_mfgsys4hhg8gdn
+                      description: Signed language ID
+                    code:
+                      type: string
+                      description: Short language code, for example en, hi or hi-en.
+                      example: en
+                    name:
+                      type: string
+                      example: English
+                  required:
+                  - id
               examples:
                 success:
                   summary: Successful response
                   value:
-                  - id: lang_en_in
-                    name: English (India)
-                    code: en-IN
+                  - id: lang_mfgsys4hhg8gdn
+                    code: en
+                    name: English
+                  - id: lang_mfgsys4f62f0vb
+                    code: hi
+                    name: Hindi
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: List Languages
       tags:
       - Languages
-      description: Returns the complete catalog of languages available for agent configuration.
+      description: Returns the global language catalog as an array of id, code, and name. Check voices and transcribers separately for language compatibility.
   /v1/languages/{id}:
     get:
       operationId: getLanguage
@@ -85,7 +85,7 @@ paths:
         in: path
         description: Language ID
         schema:
-          example: lang_abc123
+          example: lang_mfgsys4hhg8gdn
           type: string
       responses:
         '200':
@@ -93,116 +93,104 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Languages'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: lang_mfgsys4hhg8gdn
+                    description: Signed language ID
+                  code:
+                    type: string
+                    description: Short language code, for example en, hi or hi-en.
+                    example: en
+                  name:
+                    type: string
+                    example: English
+                required:
+                - id
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: lang_en_in
-                    name: English (India)
-                    code: en-IN
+                    id: lang_mfgsys4hhg8gdn
+                    code: en
+                    name: English
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '404':
           description: Language not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 404 Not Found
                   value:
-                    statusCode: 404
-                    message: Language not found
-                    error: Not Found
+                    message: Language with ID mfgsys4hhg8gdn not found
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
-        '400':
-          description: Invalid catalog ID format.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 400 Bad Request
-                  value:
-                    statusCode: 400
-                    message: Invalid catalog ID format
-                    error: Bad Request
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: Get Language Details
       tags:
       - Languages
-      description: Returns one language catalog record by ID.
+      description: Returns id, code, and name for one language catalog entry. Its presence does not guarantee compatibility with a particular voice or transcriber.
 components:
   schemas:
-    Languages:
+    FilteredErrorResponse:
       type: object
+      description: Error body on calls, batch calls, voices, languages and LLMs, which return only the message (and data for a coded refusal).
       properties:
-        id:
-          type: string
-          example: lang_abc123
-          description: Signed language ID
-      required:
-      - id
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
         message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
           type: string
-          example: Bad Request
+        data:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable refusal code.
+          description: 'Present for a coded refusal: code and the details listed for that code.'
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
       required:
-      - statusCode
       - message
-      - error
   securitySchemes:
     bearer:
       scheme: bearer

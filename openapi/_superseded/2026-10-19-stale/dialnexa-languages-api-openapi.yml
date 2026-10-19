@@ -1,0 +1,209 @@
+openapi: 3.2.0
+info:
+  title: DialNexa Languages API
+  description: Public `/v1` REST API for the DialNexa voice AI platform.
+  version: 1.0.0
+servers:
+- url: https://api.dialnexa.com
+  description: DialNexa production API
+security:
+- bearer: []
+tags:
+- name: Languages
+paths:
+  /v1/languages:
+    get:
+      operationId: listLanguages
+      parameters: []
+      responses:
+        '200':
+          description: Languages returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Languages'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                  - id: lang_en_in
+                    name: English (India)
+                    code: en-IN
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: List Languages
+      tags:
+      - Languages
+      description: Returns the complete catalog of languages available for agent configuration.
+  /v1/languages/{id}:
+    get:
+      operationId: getLanguage
+      parameters:
+      - name: id
+        required: true
+        in: path
+        description: Language ID
+        schema:
+          example: lang_abc123
+          type: string
+      responses:
+        '200':
+          description: Language returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Languages'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    id: lang_en_in
+                    name: English (India)
+                    code: en-IN
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Language not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Language not found
+                    error: Not Found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - API key does not have access to this organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this resource
+                    error: Forbidden
+        '400':
+          description: Invalid catalog ID format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: Invalid catalog ID format
+                    error: Bad Request
+      security:
+      - bearer: []
+      summary: Get Language Details
+      tags:
+      - Languages
+      description: Returns one language catalog record by ID.
+components:
+  schemas:
+    Languages:
+      type: object
+      properties:
+        id:
+          type: string
+          example: lang_abc123
+          description: Signed language ID
+      required:
+      - id
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http

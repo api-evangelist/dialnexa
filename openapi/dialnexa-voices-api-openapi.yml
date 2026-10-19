@@ -13,7 +13,7 @@ tags:
 paths:
   /v1/voices:
     get:
-      description: Returns all available voices with optional filtering by provider, accent, gender, or name.
+      description: Returns voices with optional filtering by provider, accent, gender, or name. Without llm_id it returns text-to-speech voices only; with llm_id it returns only the voices linked to that LLM.
       operationId: listVoices
       parameters:
       - name: provider
@@ -26,6 +26,7 @@ paths:
           - smallestai
           - sarvam
           - cartesia
+          - soniox
           type: string
       - name: accent
         required: false
@@ -63,15 +64,18 @@ paths:
         in: query
         description: Page number (starts from 1)
         schema:
-          default: '1'
+          minimum: 1
+          default: 1
           example: 1
           type: number
       - name: limit
         required: false
         in: query
-        description: Max 50
+        description: Results per page. Default 20, maximum 50; a larger value returns 400.
         schema:
-          default: '20'
+          minimum: 1
+          maximum: 50
+          default: 20
           example: 20
           type: number
       - name: language_id
@@ -79,88 +83,93 @@ paths:
         in: query
         description: Filter voices that support a specific language ID
         schema:
-          example: abc12345678901
+          example: lang_mfgsys4hhg8gdn
           type: string
       - name: llm_id
         required: false
         in: query
         description: Filter voices compatible with a specific LLM ID (S2S models only)
         schema:
-          example: abc12345678901
+          example: llm_mfgt5q2x8k4w7r
           type: string
+      - name: language_ids
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Comma-separated language IDs. The voice must support every selected language.
       responses:
         '200':
           description: Voices returned successfully.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  voices:
-                    type: array
-                    items:
-                      type: object
-                  total:
-                    type: number
-                  page:
-                    type: number
-                  limit:
-                    type: number
-                  totalPages:
-                    type: number
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    gender:
+                      type: string
+                    provider:
+                      type: string
+                    accent:
+                      type:
+                      - string
+                      - 'null'
               examples:
                 success:
                   summary: Successful response
                   value:
-                    voices:
-                    - id: voice_abc123
-                      name: Aditi
-                      provider: elevenlabs
-                      language_code: en-IN
-                      gender: female
-                    total: 1
-                    page: 1
-                    limit: 20
-                    totalPages: 1
+                  - id: voice_mfgt2k9x4q7w1z
+                    name: Aditi
+                    gender: female
+                    provider: elevenlabs
+                    accent: indian
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
+                    message: An unexpected error occurred. Please try again later.
+        '400':
+          description: 'A query value is invalid: page or limit below 1 or not a whole number, limit above 50, or a provider, accent or gender outside its list.'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
-                error:
-                  summary: 403 Forbidden
+                limit:
+                  summary: limit above 50
                   value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    message: 'Request validation failed: limit must not be greater than 50'
+                page:
+                  summary: page below 1
+                  value:
+                    message: 'Request validation failed: page must not be less than 1'
+                accent:
+                  summary: Unknown accent
+                  value:
+                    message: 'Request validation failed: accent must be one of the following values: '
       security:
       - bearer: []
       summary: List Voices
@@ -168,7 +177,7 @@ paths:
       - Voices
   /v1/voices/accents:
     get:
-      description: Returns the distinct accent values across all available voices, optionally filtered by provider.
+      description: Returns the distinct accent values across all non-deleted voices in the catalog, optionally filtered by provider. The list is not scoped to the workspace, so an accent can return no voices in List Voices.
       operationId: listVoiceAccents
       parameters:
       - name: provider
@@ -180,7 +189,9 @@ paths:
           - smallestai
           - sarvam
           - cartesia
+          - soniox
           type: string
+        description: Voice provider to list accents for. A value outside the list fails with 500.
       responses:
         '200':
           description: Voice accents returned successfully.
@@ -203,40 +214,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: List Voice Accents
@@ -253,65 +247,110 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpeechToSpeechVoicesResponse'
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: voice_mj18r4tq2w9xkp
+                    name:
+                      type: string
+                      example: Ash
+                    provider:
+                      type:
+                      - string
+                      - 'null'
+                      example: openai
+                    provider_voice_id:
+                      type:
+                      - string
+                      - 'null'
+                      example: ash
+                    gender:
+                      type: string
+                      example: male
+                    accent:
+                      type:
+                      - string
+                      - 'null'
+                      example: american
+                    icon:
+                      type:
+                      - string
+                      - 'null'
+                    recording:
+                      type:
+                      - string
+                      - 'null'
+                    languages:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SpeechToSpeechLanguage'
+                    llms:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SpeechToSpeechModel'
+                  required:
+                  - id
+                  - name
+                  - provider
+                  - provider_voice_id
+                  - gender
+                  - accent
+                  - icon
+                  - recording
+                  - languages
+                  - llms
               examples:
                 success:
                   summary: Successful response
                   value:
-                    voices:
-                    - id: voice_s2s_abc123
-                      name: Realtime Voice
+                  - id: voice_mj18r4tq2w9xkp
+                    name: Ash
+                    provider: openai
+                    provider_voice_id: ash
+                    gender: male
+                    accent: american
+                    icon: null
+                    recording: https://speechailogs.blob.core.windows.net/openai-voices/openai-ash-tts.mp3
+                    languages:
+                    - id: lang_mfgsys4f62f0vb
+                      name: Hindi
+                      code: hi
+                    - id: lang_mfgsys4hhg8gdn
+                      name: English
+                      code: en
+                    llms:
+                    - id: llm_mj17v3n8k2q5wd
+                      name: GPT-realtime-2
                       provider: openai
-                      type: speech_to_speech
-                      provider_voice_id: ash
-                      gender: neutral
-                      accent: null
-                      icon: null
-                      recording: null
-                      languages: []
-                      llms: []
+                      provider_id: gpt-realtime-2
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
-      summary: List Speech To Speech Voices
+      summary: List Speech-to-Speech Voices
       tags:
       - Voices
   /v1/voices/{id}:
@@ -323,7 +362,7 @@ paths:
         in: path
         description: Voice ID
         schema:
-          example: voice_abc123
+          example: voice_mfgt2k9x4q7w1z
           type: string
       responses:
         '200':
@@ -335,90 +374,62 @@ paths:
                 properties:
                   id:
                     type: string
-                    example: voice_abc123
                   name:
-                    type: string
-                  provider:
                     type: string
                   gender:
                     type: string
-                  accent:
+                  provider:
                     type: string
+                  accent:
+                    type:
+                    - string
+                    - 'null'
               examples:
                 success:
                   summary: Successful response
                   value:
-                    id: voice_abc123
+                    id: voice_mfgt2k9x4q7w1z
                     name: Aditi
-                    provider: elevenlabs
-                    language_code: en-IN
                     gender: female
-                    preview_url: https://example.com/preview.mp3
+                    provider: elevenlabs
+                    accent: indian
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '404':
           description: Voice not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 404 Not Found
                   value:
-                    statusCode: 404
                     message: Voice not found
-                    error: Not Found
+                notSupported:
+                  summary: Voice outside the supported voice models
+                  value:
+                    message: Voice with ID 2g7Xy3tY53gRlp not found or is deleted
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
-        '400':
-          description: Invalid catalog ID format.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 400 Bad Request
-                  value:
-                    statusCode: 400
-                    message: Invalid catalog ID format
-                    error: Bad Request
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: Get Voice Details
@@ -434,7 +445,7 @@ paths:
         in: path
         description: Voice ID
         schema:
-          example: voice_abc123
+          example: voice_mfgt2k9x4q7w1z
           type: string
       responses:
         '200':
@@ -448,7 +459,7 @@ paths:
                   properties:
                     id:
                       type: string
-                      example: lang_abc123
+                      example: lang_mfgsys4hhg8gdn
                     code:
                       type: string
                       example: en
@@ -459,100 +470,187 @@ paths:
                 success:
                   summary: Successful response
                   value:
-                  - id: lang_en_in
-                    name: English (India)
-                    code: en-IN
+                  - id: lang_mfgsys4hhg8gdn
+                    code: en
+                    name: English
+                  - id: lang_mfgsys4f62f0vb
+                    code: hi
+                    name: Hindi
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '404':
           description: Voice not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 404 Not Found
                   value:
-                    statusCode: 404
                     message: Voice not found
-                    error: Not Found
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
-        '403':
-          description: Forbidden - API key does not have access to this organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
-        '400':
-          description: Invalid catalog ID format.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 400 Bad Request
-                  value:
-                    statusCode: 400
-                    message: Invalid catalog ID format
-                    error: Bad Request
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
-      summary: Get Voice Language Details
+      summary: List Voice Languages
       tags:
       - Voices
       description: Returns the languages supported by one voice.
+  /v1/voices/language-options:
+    get:
+      operationId: listVoiceLanguageOptions
+      summary: List Voice Language Options
+      description: Lists languages that leave at least one compatible voice alongside all selected languages, scoped to the shared catalog and this workspace imports. Languages already in language_ids are not returned. API-key responses are a root array.
+      tags:
+      - Voices
+      security:
+      - bearer: []
+      parameters:
+      - name: language_ids
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Comma-separated selected language IDs. Omit for the initial list.
+      - name: provider
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Optional comma-separated provider filters.
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    code:
+                      type: string
+                    name:
+                      type: string
+                    voice_count:
+                      type: integer
+                      minimum: 0
+                  required:
+                  - id
+                  - name
+                  - code
+                  - voice_count
+              examples:
+                success:
+                  value:
+                  - id: lang_mfgsys4f62f0vb
+                    code: hi
+                    name: Hindi
+                    voice_count: 9
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredErrorResponse'
+              examples:
+                error:
+                  value:
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    message: An unexpected error occurred. Please try again later.
 components:
   schemas:
-    SpeechToSpeechVoicesResponse:
+    FilteredErrorResponse:
+      type: object
+      description: Error body on calls, batch calls, voices, languages and LLMs, which return only the message (and data for a coded refusal).
+      properties:
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable refusal code.
+          description: 'Present for a coded refusal: code and the details listed for that code.'
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
+      required:
+      - message
+    SpeechToSpeechLanguage:
       type: object
       properties:
-        voices:
-          type: array
-          items:
-            $ref: '#/components/schemas/SpeechToSpeechVoice'
+        id:
+          type: string
+          example: lang_mfgsys4f62f0vb
+        name:
+          type: string
+          example: Hindi
+        code:
+          type: string
+          example: hi
       required:
-      - voices
+      - id
+      - name
+      - code
     SpeechToSpeechModel:
       type: object
       properties:
         id:
           type: string
-          example: llm_abc123456789
+          example: llm_mj17v3n8k2q5wd
         name:
           type: string
-          example: GPT Realtime 2
+          example: GPT-realtime-2
         provider:
           type: string
           example: openai
@@ -564,96 +662,6 @@ components:
       - name
       - provider
       - provider_id
-    SpeechToSpeechLanguage:
-      type: object
-      properties:
-        id:
-          type: string
-          example: mj17k2hwviopty
-        name:
-          type: string
-          example: Hindi
-        code:
-          type: string
-          example: hi
-      required:
-      - id
-      - name
-      - code
-    SpeechToSpeechVoice:
-      type: object
-      properties:
-        id:
-          type: string
-          example: voice_abc123456789
-        name:
-          type: string
-          example: Ash
-        provider:
-          type:
-          - string
-          - 'null'
-          example: openai
-        provider_voice_id:
-          type:
-          - string
-          - 'null'
-          example: ash
-        gender:
-          type: string
-          example: male
-        accent:
-          type:
-          - string
-          - 'null'
-          example: american
-        icon:
-          type:
-          - string
-          - 'null'
-        recording:
-          type:
-          - string
-          - 'null'
-        languages:
-          type: array
-          items:
-            $ref: '#/components/schemas/SpeechToSpeechLanguage'
-        llms:
-          type: array
-          items:
-            $ref: '#/components/schemas/SpeechToSpeechModel'
-      required:
-      - id
-      - name
-      - provider
-      - provider_voice_id
-      - gender
-      - accent
-      - icon
-      - recording
-      - languages
-      - llms
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
   securitySchemes:
     bearer:
       scheme: bearer

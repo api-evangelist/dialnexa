@@ -257,6 +257,26 @@ apis:
     url: https://dialnexa.com/docs/api-reference/openapi.json
   - type: Authentication
     url: authentication/dialnexa-auth.md
+- aid: dialnexa:dialnexa-agent-builder-api
+  name: DialNexa Agent Builder API
+  description: The Agent Builder API from DialNexa — 7 operation(s) for agent builder.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Agent Builder
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-agent-builder-api-openapi.yml
+- aid: dialnexa:dialnexa-authentication-api
+  name: DialNexa Authentication API
+  description: The Authentication API from DialNexa — 1 operation(s) for authentication.
+  humanURL: https://dialnexa.com/docs
+  baseURL: https://api.dialnexa.com
+  tags:
+  - Authentication
+  properties:
+  - type: OpenAPI
+    url: openapi/dialnexa-authentication-api-openapi.yml
 common:
 - url: https://dialnexa.com/blogs/feed/
   type: BlogRSS

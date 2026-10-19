@@ -1,0 +1,557 @@
+openapi: 3.2.0
+info:
+  title: DialNexa Workflow Leads API
+  description: Public `/v1` REST API for the DialNexa voice AI platform.
+  version: 1.0.0
+servers:
+- url: https://api.dialnexa.com
+  description: DialNexa production API
+security:
+- bearer: []
+tags:
+- name: Workflow Leads
+paths:
+  /v1/workflows/{workflowId}/leads:
+    post:
+      operationId: uploadWorkflowLeads
+      parameters:
+      - name: workflowId
+        required: true
+        in: path
+        description: Workflow ID
+        schema:
+          example: workflow_abc123
+          type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV or Excel file with leads data
+            examples:
+              request:
+                summary: Upload workflow leads file
+                value:
+                  file: workflow-leads.csv
+      responses:
+        '201':
+          description: File processed successfully.
+          content:
+            application/json:
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    statusCode: 201
+                    message: Leads uploaded successfully
+                    data:
+                      '+919876543210':
+                      - lead_abc123
+                    count: 1
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 400 Bad Request
+                  value:
+                    statusCode: 400
+                    message: File must be a CSV or Excel file (.csv, .xlsx, .xls)
+                    error: Bad Request
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Workflow not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Workflow not found
+                    error: Not Found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - workflow does not belong to your organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this workflow
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Upload Workflow Leads
+      tags:
+      - Workflow Leads
+      description: Uploads and enrolls leads in one workflow from a supported file.
+    get:
+      operationId: listWorkflowLeads
+      parameters:
+      - name: workflowId
+        required: true
+        in: path
+        description: Workflow ID
+        schema:
+          example: workflow_abc123
+          type: string
+      - name: leadIds
+        required: false
+        in: query
+        description: Comma-separated lead IDs to filter
+        schema:
+          example: id1,id2
+          type: string
+      responses:
+        '200':
+          description: Leads returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                    example: 200
+                  message:
+                    type: string
+                    example: Leads fetched successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: lead_abc123
+                        phone_number:
+                          type: string
+                          example: '+919876543210'
+                        dynamic_variables:
+                          type: object
+                          example:
+                            name: John
+                            company: Acme
+                        status:
+                          type: string
+                          example: pending
+                        createdAt:
+                          type: string
+                          format: date-time
+                  count:
+                    type: number
+                    example: 42
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    statusCode: 200
+                    message: Leads fetched successfully
+                    data:
+                    - id: lead_abc123
+                      phone_number: '+919876543210'
+                      dynamic_variables:
+                        customer_name: Priya Sharma
+                        loan_amount: '500000'
+                      status: pending
+                      createdAt: '2026-07-03T10:30:00.000Z'
+                    count: 1
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Workflow not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Workflow not found
+                    error: Not Found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - workflow does not belong to your organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this workflow
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: List Workflow Leads
+      tags:
+      - Workflow Leads
+      description: Returns leads enrolled in one workflow.
+  /v1/workflows/{workflowId}/leads/variable-keys:
+    get:
+      operationId: listWorkflowLeadVariableKeys
+      parameters:
+      - name: workflowId
+        required: true
+        in: path
+        description: Workflow ID
+        schema:
+          example: workflow_abc123
+          type: string
+      responses:
+        '200':
+          description: Variable keys returned successfully.
+          content:
+            application/json:
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    statusCode: 200
+                    message: Variable keys fetched successfully
+                    data:
+                      keys:
+                      - customer_name
+                      - loan_amount
+                      - product
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Workflow not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Workflow not found
+                    error: Not Found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - workflow does not belong to your organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this workflow
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Get Workflow Lead Variables
+      tags:
+      - Workflow Leads
+      description: Returns dynamic variable keys discovered across leads in one workflow.
+  /v1/workflows/{workflowId}/leads/{id}:
+    delete:
+      operationId: deleteWorkflowLead
+      parameters:
+      - name: workflowId
+        required: true
+        in: path
+        description: Workflow ID
+        schema:
+          example: workflow_abc123
+          type: string
+      - name: id
+        required: true
+        in: path
+        description: Lead ID
+        schema:
+          example: lead_abc123
+          type: string
+      responses:
+        '200':
+          description: Lead removed successfully.
+          content:
+            application/json:
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    statusCode: 200
+                    message: Lead removed successfully
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Workflow lead not found
+                    error: Not Found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - workflow does not belong to your organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this workflow
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Delete Workflow Lead
+      tags:
+      - Workflow Leads
+      description: Removes one lead from a workflow and prevents it from advancing to later steps.
+  /v1/workflows/{workflowId}/leads/{id}/history:
+    get:
+      operationId: getWorkflowLeadHistory
+      parameters:
+      - name: workflowId
+        required: true
+        in: path
+        description: Workflow ID
+        schema:
+          example: workflow_abc123
+          type: string
+      - name: id
+        required: true
+        in: path
+        description: Lead ID
+        schema:
+          example: lead_abc123
+          type: string
+      responses:
+        '200':
+          description: Lead execution history returned successfully.
+          content:
+            application/json:
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    statusCode: 200
+                    message: Lead history fetched successfully
+                    data:
+                      lead:
+                        id: lead_abc123
+                        phone_number: '+919876543210'
+                        dynamic_variables:
+                          customer_name: Priya Sharma
+                          loan_amount: '500000'
+                        status: pending
+                        createdAt: '2026-07-03T10:30:00.000Z'
+                      history:
+                      - node_id: node_start
+                        node_type: VOICE_CALL
+                        label: Initial call
+                        status: completed
+                        call_id: call_abc123
+                        started_at: '2026-07-03T10:30:00.000Z'
+                        ended_at: '2026-07-03T10:32:00.000Z'
+        '401':
+          description: Unauthorized - missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 401 Unauthorized
+                  value:
+                    statusCode: 401
+                    message: API key is missing or invalid
+                    error: Unauthorized
+        '404':
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 404 Not Found
+                  value:
+                    statusCode: 404
+                    message: Workflow lead not found
+                    error: Not Found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 500 Internal Server Error
+                  value:
+                    statusCode: 500
+                    message: Internal server error
+                    error: Internal Server Error
+        '403':
+          description: Forbidden - workflow does not belong to your organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                error:
+                  summary: 403 Forbidden
+                  value:
+                    statusCode: 403
+                    message: You do not have permission to access this workflow
+                    error: Forbidden
+      security:
+      - bearer: []
+      summary: Get Lead Execution History
+      tags:
+      - Workflow Leads
+      description: Returns node-by-node execution history for one workflow lead.
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+          example: phone_number must be a valid E.164 phone number
+        error:
+          type: string
+          example: Bad Request
+      required:
+      - statusCode
+      - message
+      - error
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      type: http

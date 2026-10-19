@@ -36,93 +36,125 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateCallResponse'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: call_mfgsn90vwcozgb
+                    description: Unique call ID for tracking. Use this ID to reference the call in other API endpoints.
+                  agent_id:
+                    type: string
+                    example: agent_mfgsn90vwcozgb
+                    description: The ID of the agent used for this call.
+                  to_phone_number:
+                    type: string
+                    example: '+911234567890'
+                    description: The phone number that will receive the call.
+                  agent_version_number:
+                    type: number
+                    example: 2
+                    description: Numeric agent version actually selected for this call. If omitted in the request, the latest published version is selected.
+                required:
+                - id
+                - to_phone_number
+                - agent_id
               examples:
                 success:
                   summary: Successful response
                   value:
                     id: call_abc123
-                    to_phone_number: '+919876543210'
                     agent_id: agent_2g7Xy3tY53gRlp
+                    to_phone_number: '+919876543210'
                     agent_version_number: 1
         '400':
-          description: Invalid request body - missing required fields or validation error.
+          description: Invalid request body or destination number, invalid metadata.agent_transfer_destinations, notes with more than 15 keys, the agent has no outbound number, phone_number_id is not one of its outbound numbers (PHONE_NUMBER_NOT_LINKED), or the agent has several outbound numbers and none was chosen (PHONE_NUMBER_REQUIRED, with phone_number_ids in data).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 400 Bad Request
                   value:
-                    statusCode: 400
-                    message: phone_number must be a valid E.164 phone number
-                    error: Bad Request
+                    message: 'Request validation failed: phone_number must be a string'
+                phoneNumberNotLinked:
+                  summary: 400 Bad Request
+                  value:
+                    message: 'Request validation failed: Phone number phn_2g7Xy3tY53gRlp is not an outbound number of agent agent_mgao6051Rk718Y.'
+                    data:
+                      code: PHONE_NUMBER_NOT_LINKED
+                phoneNumberRequired:
+                  summary: 400 Bad Request
+                  value:
+                    message: 'Request validation failed: Agent agent_mgao6051Rk718Y has 2 outbound numbers. Pass phone_number_id to choose which one to dial from.'
+                    data:
+                      code: PHONE_NUMBER_REQUIRED
+                      phone_number_ids:
+                      - phn_2g7Xy3tY53gRlp
+                      - phn_8Kd2mQ4vX9pLs1
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '402':
-          description: Payment required - insufficient billing wallet balance.
+          description: The wallet has no spendable balance, or the workspace's monthly spend cap is reached.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 402 Payment Required
                   value:
-                    statusCode: 402
-                    message: Insufficient billing wallet balance
-                    error: Payment Required
+                    message: Insufficient balance. Please top up your billing wallet before making a call..
+                spendCapReached:
+                  summary: Monthly spend cap reached
+                  value:
+                    message: Monthly spend cap reached (₹5,000.00 of ₹5,000.00 used). Raise it in Billing → Balance alerts, or it resets on 1 Nov.
         '403':
-          description: Forbidden - KYC not verified or API key does not have access.
+          description: The destination country or network prefix is not enabled for this workspace, or the workspace owner's KYC is not verified and the destination is not the owner's registered number (KYC rule not enforced for SIP numbers), or the destination number is on the workspace's DND list.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 403 Forbidden
                   value:
-                    statusCode: 403
-                    message: Destination country or network prefix is not enabled for this workspace
-                    error: Forbidden
+                    message: 'Country US Is Not Enabled For Outbound Calls From +91 Numbers. Enabled Countries: India (IN).'
+                dndBlocked:
+                  summary: Number on the DND list
+                  value:
+                    message: This number is on your workspace's DND list and cannot be called. Remove it from Workspace Settings > Telephony > DND list to call it.
         '404':
-          description: Agent or phone number not found.
+          description: Agent not found in your organization, or it has no published version (or the requested agent_version_number is not published).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 404 Not Found
                   value:
-                    statusCode: 404
-                    message: Agent or phone number not found
-                    error: Not Found
+                    message: Agent mgao6051Rk718Y not found or doesn't belong to organization 7Hk2pQ9rT1xY4z
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: Create Call
@@ -134,69 +166,52 @@ paths:
       - name: agent_id
         required: false
         in: query
-        description: Filter by agent ID(s) - can be a single ID or comma-separated list (e.g., 1,2,3)
+        description: 'Filter by agent ID: one ID or a comma-separated list (e.g., agent_abc,agent_def). Ignored when agent_version_id is sent, and replaced by agent_version_name when that name matches a version.'
         schema:
           type: string
       - name: call_id
         required: false
         in: query
-        description: Filter by call ID - can be a single ID or comma-separated list (e.g., call_abc,call_def)
+        description: Filter by call ID - single or comma-separated list (e.g., call_abc,call_def)
         schema:
           type: string
       - name: batch_call_id
         required: false
         in: query
-        description: Filter by batch call ID - can be a single ID or comma-separated list (e.g., batch_abc,batch_def)
+        description: Filter by batch call ID - single or comma-separated list (e.g., batch_abc,batch_def). With export=true, every matching call of those batches is returned in one JSON array.
         schema:
           type: string
       - name: from
         required: false
         in: query
-        description: Filter by sender phone number
+        description: Filter by the workspace phone number on the call (the number dialled from, or for an inbound call the number that was called), as a partial match on its digits.
         schema:
           type: string
       - name: to
         required: false
         in: query
-        description: Filter by recipient phone number
+        description: Filter by recipient phone number, as a partial match on the batch lead's number as stored. The value is not reduced to digits, and Indian lead numbers are stored as `91XXXXXXXXXX` without `+`, so send digits only. Only batch calls carry a lead, so single calls and retry attempts never match this filter.
         schema:
           type: string
       - name: type
         required: false
         in: query
-        description: Filter by call type(s) - can be a single value or comma-separated list
+        description: 'Filter by call type: one value or a comma-separated list of `phone`, `web`.'
         schema:
           type: string
-          enum:
-          - phone
-          - web
       - name: call_direction
         required: false
         in: query
-        description: Filter by call direction(s) - can be a single value or comma-separated list
+        description: 'Filter by call direction: one value or a comma-separated list of `inbound`, `outbound`.'
         schema:
           type: string
-          enum:
-          - inbound
-          - outbound
-      - name: latency_min
-        required: false
-        in: query
-        description: Filter by minimum latency (in milliseconds)
-        schema:
-          type: number
-      - name: latency_max
-        required: false
-        in: query
-        description: Filter by maximum latency (in milliseconds)
-        schema:
-          type: number
       - name: agent_version_id
         required: false
         in: query
-        description: Filter by agent version ID(s) - can be a single ID or comma-separated list (e.g., 1,2,3)
+        description: Filter batch calls by agent version, written as `<agent_id>-<version_number>` (for example `agent_2g7Xy3tY53gRlp-3`); one value or a comma-separated list. Only calls placed by a batch match. A value in any other format is ignored, and when no value is valid the whole filter is dropped. When this parameter is sent, `agent_id` is not applied.
         schema:
           type: string
+          example: agent_2g7Xy3tY53gRlp-3
       - name: agent_version_name
         required: false
         in: query
@@ -206,105 +221,141 @@ paths:
       - name: sentiment
         required: false
         in: query
-        description: Filter by sentiment(s) - can be a single value or comma-separated list
+        description: 'Filter by user sentiment: one value or a comma-separated list of `positive`, `neutral`, `negative`, `unknown`.'
         schema:
           type: string
-          enum:
-          - positive
-          - neutral
-          - negative
-          - unknown
       - name: start_date
         required: false
         in: query
-        description: Filter by start date (ISO format)
+        description: Return calls created on or after the start of this day in UTC (ISO 8601). The value is converted to UTC first, then widened to 00:00:00 UTC of that day, so a time with an offset can move the day. Send a plain date (`YYYY-MM-DD`).
         schema:
           type: string
       - name: end_date
         required: false
         in: query
-        description: Filter by end date (ISO format)
+        description: Return calls created on or before the end of this day in UTC (ISO 8601). The value is converted to UTC first, then widened to 23:59:59.999 UTC of that day, so a time with an offset can move the day. Send a plain date (`YYYY-MM-DD`).
         schema:
           type: string
       - name: duration_greater_than
         required: false
         in: query
-        description: Filter by minimum call duration (in milliseconds)
+        description: Return calls longer than this many seconds.
         schema:
+          minimum: 0
           type: number
       - name: duration_less_than
         required: false
         in: query
-        description: Filter by maximum call duration (in milliseconds)
+        description: Return calls shorter than this many seconds.
         schema:
+          minimum: 0
           type: number
       - name: duration_min
         required: false
         in: query
-        description: Filter by minimum duration range (in milliseconds)
+        description: Lower bound of a duration range in seconds, inclusive. Applied only together with duration_max; sent alone it is ignored.
         schema:
+          minimum: 0
           type: number
       - name: duration_max
         required: false
         in: query
-        description: Filter by maximum duration range (in milliseconds)
+        description: Upper bound of a duration range in seconds, inclusive. Applied only together with duration_min; sent alone it is ignored.
         schema:
+          minimum: 0
           type: number
       - name: page
         required: false
         in: query
-        description: Page number (starts from 1)
+        description: 'Page number (default: 1)'
         schema:
-          type: string
+          minimum: 1
+          type: integer
       - name: limit
         required: false
         in: query
-        description: 'Number of records per page (min: 1, default: 20, max: 200)'
+        description: 'Results per page (default: 20)'
         schema:
-          type: string
+          minimum: 1
+          maximum: 200
+          default: 20
+          type: integer
       - name: created_at
         required: false
         in: query
-        description: Sort by created_at (asc or desc)
+        description: Sort by creation date
         schema:
-          type: string
           enum:
           - asc
           - desc
+          type: string
       - name: duration
         required: false
         in: query
-        description: Sort by duration (asc or desc)
+        description: Sort by call duration
         schema:
-          type: string
           enum:
           - asc
           - desc
+          type: string
       - name: status
         required: false
         in: query
-        description: Filter by call status(es) - can be a single status or comma-separated list
+        description: 'Filter by call status: one value or a comma-separated list, for example completed,failed. Values: initiated, received, sent, did_not_pick, busy, failed, no_answer, completed, created, cancelled, retry_expired. An unknown value returns 400.'
         schema:
           type: string
       - name: export
         required: false
         in: query
-        description: Set to true to export all data without pagination
+        description: Set to `true` to return every matching call in one JSON array without pagination, up to the export row limit, including retry attempts. Omit it or send `false` to receive pages. For a batch export, the row limit counts the original calls only; retry attempts are added on top, so the array can be longer.
         schema:
           type: boolean
       - name: end_reason
         required: false
         in: query
-        description: Filter by end/hangup reason - exact match; comma-separate multiple values for OR filtering
+        description: 'Filter by why the call ended: one value or a comma-separated list of `agent_disconnected`, `user_disconnected`, `user_busy`, `user_did_not_pick_up`, `invalid_phone_number`, `unallocated_phone_number`, `unknown`, `network_failure`, `voicemail_detected`, `user_unreachable`, `destination_forbidden`, `system_failure`, `system_at_capacity`, `insufficient_balance`, `agent_not_found`, `sip_auth_failed`, `sip_trunk_unreachable`, `spend_cap_reached`, `dnd_blocked`. Unknown values are ignored; if no value is known, no calls match.'
         schema:
           type: string
       - name: columns
         required: false
         in: query
-        description: 'Export only: comma-separated column keys. Omitting both transcript and summary raises the single-export limit from 5000 to 10000 rows. Omit this parameter to include all columns.'
+        description: 'Export only: comma-separated list of column keys being exported (e.g. "duration,status,end_reason"). Lets the server skip fetching heavy columns nobody asked for, which raises the export row limit. Omit to fetch everything, as before.'
         schema:
           type: string
-          example: duration,status,agent_name
+      - name: is_ivr
+        in: query
+        required: false
+        schema:
+          type: boolean
+        description: True for IVR calls including handoffs, false for other calls; omit for all.
+      - name: tags
+        in: query
+        required: false
+        schema:
+          type: string
+          example: priority,september
+        description: Comma-separated workflow lead tags copied to calls when placed.
+      - name: tags_match
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - any
+          - all
+          default: any
+        description: Whether calls must match any or all supplied tags.
+      - name: agent_type
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - single_prompt
+          - conversational_flow
+          - speech_to_speech
+          - ivr
+        description: Filter by agent type. ivr is equivalent to is_ivr=true and includes IVR handoffs. Other types require an agent ID retained on the call; calls without one do not match those types.
       responses:
         '200':
           description: Calls returned successfully.
@@ -313,7 +364,75 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CallLogs'
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: call_abc123
+                      description: Signed call ID
+                    agent_id:
+                      type:
+                      - string
+                      - 'null'
+                      example: agent_2g7Xy3tY53gRlp
+                      description: Agent that handled the call.
+                    batch_id:
+                      type:
+                      - string
+                      - 'null'
+                      description: Signed batch ID of the batch the call belongs to; null for single calls and for retry attempts.
+                    to_number:
+                      type:
+                      - string
+                      - 'null'
+                      example: '+919876543210'
+                      description: 'Destination number as recorded on the call: the number as sent for a single call, and the lead''s number as stored for a batch call, where an Indian number appears as `91XXXXXXXXXX` without `+`.'
+                    phone_number_id:
+                      type:
+                      - string
+                      - 'null'
+                      example: phn_abc123
+                      description: ID of the workspace phone number the call was placed from.
+                    called_time:
+                      format: date-time
+                      type: string
+                    duration:
+                      type:
+                      - string
+                      - 'null'
+                      example: '42'
+                      description: Call duration in seconds, serialized as a string (the column is a 64-bit integer); null until a duration is recorded.
+                    status:
+                      type: string
+                    initiated_time:
+                      type: string
+                    end_reason:
+                      type: string
+                      description: Why the call ended; `unknown` until the call ends. One of `agent_disconnected`, `user_disconnected`, `user_busy`, `user_did_not_pick_up`, `invalid_phone_number`, `unallocated_phone_number`, `unknown`, `network_failure`, `voicemail_detected`, `user_unreachable`, `destination_forbidden`, `system_failure`, `system_at_capacity`, `insufficient_balance`, `agent_not_found`, `sip_auth_failed`, `sip_trunk_unreachable`, `spend_cap_reached`, `dnd_blocked`.
+                    postcallanalysis:
+                      type:
+                      - object
+                      - 'null'
+                      additionalProperties: true
+                      description: Post-call analysis fields extracted for this call, keyed by field name. An empty object until analysis has run.
+                    llm_name:
+                      type:
+                      - string
+                      - 'null'
+                      example: gpt-4o
+                      description: Display name of the language model used on the call.
+                    voice_model_name:
+                      type:
+                      - string
+                      - 'null'
+                      description: Display name of the voice used on the call.
+                    recording_sas_url:
+                      type:
+                      - string
+                      - 'null'
+                      description: Time-limited link to the recording. Absent from the response unless export=true.
+                  required:
+                  - id
               examples:
                 success:
                   summary: Successful response
@@ -321,70 +440,52 @@ paths:
                   - id: call_abc123
                     agent_id: agent_2g7Xy3tY53gRlp
                     to_number: '+919876543210'
-                    from_number: '+14155552671'
-                    status: initiated
-                    call_direction: outbound
-                    createdAt: '2026-07-03T10:30:00.000Z'
-                    duration: 42
-                    end_reason: completed
+                    duration: '42'
+                    status: completed
+                    end_reason: user_disconnected
         '400':
           description: Bad request - invalid query parameters.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 400 Bad Request
                   value:
-                    statusCode: 400
-                    message: Invalid query parameters
-                    error: Bad Request
+                    message: 'Request validation failed: limit must not be greater than 200'
+                unknownFilterValue:
+                  summary: Unknown filter value
+                  value:
+                    message: 'Request validation failed: Invalid status filter value: foo. Allowed values: initiated, received, sent, did_not_pick, busy, failed, no_answer, completed, created, cancelled, retry_expired'
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: Destination country or network prefix is not enabled for this workspace
-                    error: Forbidden
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: List Calls
       tags:
       - Calls
-      description: Returns calls for the authenticated workspace using the supplied filters, newest records first.
+      description: Returns calls for the authenticated workspace using the supplied filters, newest records first (a `duration` sort orders by duration instead, and an export of one batch follows the lead file order), as a root JSON array without pagination metadata. Paginated results leave out retry attempts; send `export=true` or `call_id` to include them.
   /v1/calls/{id}:
     get:
       operationId: getCall
@@ -402,7 +503,76 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CallLogs'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: call_abc123
+                    description: Signed call ID
+                  agent_id:
+                    type:
+                    - string
+                    - 'null'
+                    example: agent_2g7Xy3tY53gRlp
+                    description: Agent that handled the call.
+                  batch_id:
+                    type:
+                    - string
+                    - 'null'
+                    description: Signed batch ID of the batch the call belongs to; null for single calls and for retry attempts.
+                  to_number:
+                    type:
+                    - string
+                    - 'null'
+                    example: '+919876543210'
+                    description: 'Destination number as recorded on the call: the number as sent for a single call, and the lead''s number as stored for a batch call, where an Indian number appears as `91XXXXXXXXXX` without `+`.'
+                  phone_number_id:
+                    type:
+                    - string
+                    - 'null'
+                    example: phn_abc123
+                    description: ID of the workspace phone number the call was placed from.
+                  called_time:
+                    format: date-time
+                    type: string
+                  duration:
+                    type:
+                    - string
+                    - 'null'
+                    example: '42'
+                    description: Call duration in seconds, serialized as a string (the column is a 64-bit integer); null until a duration is recorded.
+                  status:
+                    type: string
+                  initiated_time:
+                    type: string
+                  end_reason:
+                    type: string
+                    description: Why the call ended; `unknown` until the call ends. One of `agent_disconnected`, `user_disconnected`, `user_busy`, `user_did_not_pick_up`, `invalid_phone_number`, `unallocated_phone_number`, `unknown`, `network_failure`, `voicemail_detected`, `user_unreachable`, `destination_forbidden`, `system_failure`, `system_at_capacity`, `insufficient_balance`, `agent_not_found`, `sip_auth_failed`, `sip_trunk_unreachable`, `spend_cap_reached`, `dnd_blocked`.
+                  postcallanalysis:
+                    type:
+                    - object
+                    - 'null'
+                    additionalProperties: true
+                    description: Post-call analysis fields extracted for this call, keyed by field name. An empty object until analysis has run.
+                  llm_name:
+                    type:
+                    - string
+                    - 'null'
+                    example: gpt-4o
+                    description: Display name of the language model used on the call.
+                  voice_model_name:
+                    type:
+                    - string
+                    - 'null'
+                    description: Display name of the voice used on the call.
+                  recording_sas_url:
+                    type:
+                    - string
+                    - 'null'
+                    format: uri
+                    description: Time-limited URL for the call recording; null when the call has no recording. Request the call again for a fresh URL after it expires.
+                required:
+                - id
               examples:
                 success:
                   summary: Successful response
@@ -410,109 +580,85 @@ paths:
                     id: call_abc123
                     agent_id: agent_2g7Xy3tY53gRlp
                     to_number: '+919876543210'
-                    from_number: '+14155552671'
-                    status: initiated
-                    call_direction: outbound
-                    createdAt: '2026-07-03T10:30:00.000Z'
-                    duration: 42
-                    transcript: 'Agent: Hello Priya. User: I am interested in the loan offer.'
-                    summary: Customer asked for details about the loan offer.
-        '400':
-          description: Invalid call ID format.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 400 Bad Request
-                  value:
-                    statusCode: 400
-                    message: Invalid call ID format
-                    error: Bad Request
+                    duration: '42'
+                    status: completed
+                    end_reason: user_disconnected
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden - call does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this call
-                    error: Forbidden
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '404':
           description: Call not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 404 Not Found
                   value:
-                    statusCode: 404
-                    message: Call not found
-                    error: Not Found
+                    message: Call log with ID 2g7Xy3tY53gRlp not found or is deleted
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: Get Call Details
       tags:
       - Calls
-      description: Returns the current call record, including routing, status, transcript, and analysis fields when available.
+      description: 'Returns the current call record: routing, status, timing, end reason, post-call analysis and the recording URL when available.'
 components:
   schemas:
-    CreateCallResponse:
+    FilteredErrorResponse:
       type: object
+      description: Error body on calls, batch calls, voices, languages and LLMs, which return only the message (and data for a coded refusal).
       properties:
-        id:
+        message:
           type: string
-          example: call_mfgsn90vwcozgb
-          description: Unique call ID for tracking. Use this ID to reference the call in other API endpoints.
-        to_phone_number:
-          type: string
-          example: '+911234567890'
-          description: The phone number that will receive the call.
-        agent_id:
-          type: string
-          example: agent_mfgsn90vwcozgb
-          description: The ID of the agent used for this call.
-        agent_version_number:
-          type: number
-          example: 2
-          description: The version number of the agent used for this call.
+        data:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable refusal code.
+          description: 'Present for a coded refusal: code and the details listed for that code.'
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
       required:
-      - id
-      - to_phone_number
-      - agent_id
+      - message
     CreateCallRequest:
       type: object
       properties:
@@ -522,12 +668,16 @@ components:
           description: 'Phone number to call (must include country code). Format: +[country code][phone number]'
         agent_id:
           type: string
-          example: mgao6051Rk718Y
+          example: agent_2g7Xy3tY53gRlp
           description: Agent ID to use for the call. Must belong to the authenticated organization.
         agent_version_number:
           type: number
           example: 2
           description: Specific agent version number to use (optional). If provided, must be a published version. If not provided, will use the latest published version.
+        phone_number_id:
+          type: string
+          example: phn_2g7Xy3tY53gRlp
+          description: One of the agent's outbound numbers to call from. Required when the agent has more than one outbound number.
         metadata:
           type: object
           example:
@@ -546,35 +696,6 @@ components:
       - phone_number
       - agent_id
       - metadata
-    ErrorResponse:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
-          type: string
-          example: Bad Request
-      required:
-      - statusCode
-      - message
-      - error
-    CallLogs:
-      type: object
-      properties:
-        id:
-          type: string
-          example: call_abc123
-          description: Signed call ID
-      required:
-      - id
   securitySchemes:
     bearer:
       scheme: bearer

@@ -13,7 +13,7 @@ tags:
 paths:
   /v1/batch-calls:
     post:
-      description: Uploads a CSV or Excel leads file, creates a batch call, and enqueues outbound calls for all leads.
+      description: Uploads a CSV or Excel file and creates a batch pinned to a published agent version and an outbound number. The response status initiated means accepted; the saved job is waiting or scheduled. Multiple batches can run concurrently within available workspace capacity. A request that fails, for example on row validation, KYC or an unsupported file type, leaves no batch behind.
       operationId: createBatchCall
       parameters: []
       requestBody:
@@ -30,32 +30,49 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: CSV or Excel file containing leads (max 10 MB)
+                  description: CSV, XLSX or XLS file containing leads (max 10 MB). Needs a phone number column; every number must include its country code.
                 title:
                   type: string
                   example: Q3 Follow-up Batch
-                  maxLength: 35
-                  description: Batch title shown in the dashboard. Must be 35 characters or fewer.
                 agent_id:
                   type: string
                   example: agent_abc123
                 agent_version_number:
                   type: number
                   example: 1
-                  description: Published agent version to use. Omit to use the agent's latest published version.
+                  description: Must be a published version. Omit to use the agent's latest published version. The batch stays on this version even if the agent is published again.
+                phone_number_id:
+                  type: string
+                  example: phn_abc123
+                  description: One of the agent's outbound numbers to dial from. Required when the agent has more than one outbound number.
                 starts_at:
                   type: string
-                  example: '2024-01-15T09:00:00Z'
-                  description: ISO 8601 datetime - leave empty to start immediately
+                  example: '2026-10-15T09:00:00Z'
+                  description: 'ISO 8601 datetime: leave empty to start immediately'
                 ends_at:
                   type: string
-                  example: '2024-01-15T18:00:00Z'
+                  example: '2026-10-20T18:00:00Z'
+                  description: 'ISO 8601 datetime stored with the batch. The scheduler does not enforce it today: calls are not stopped at this time.'
                 calling_hours_start:
                   type: string
                   example: 09:00
+                  description: Time of day (for example `09:00`) stored with the batch. The scheduler does not enforce it today. The API does not validate it; a value that is not a valid time returns 500.
                 calling_hours_end:
                   type: string
                   example: '18:00'
+                  description: Time of day (for example `18:00`) stored with the batch. The scheduler does not enforce it today. The API does not validate it; a value that is not a valid time returns 500.
+                number_of_retries:
+                  type: integer
+                  minimum: 0
+                  maximum: 4
+                  example: 2
+                  description: How many times to retry a lead that did not connect, from 0 to 4. Omit both retry fields for no retries. Must be 0 when interval_between_retries is 0, and greater than 0 when it is not; send both fields together.
+                interval_between_retries:
+                  type: integer
+                  minimum: 0
+                  maximum: 1440
+                  example: 30
+                  description: 'Minutes to wait between retries, from 0 to 1440. Must be 0 when number_of_retries is 0, and greater than 0 when it is not. Send it whenever number_of_retries is above 0: without it the retry is scheduled with no wait.'
             examples:
               request:
                 summary: Request example
@@ -66,7 +83,7 @@ paths:
                   agent_version_number: 1
       responses:
         '201':
-          description: Batch call created and calls enqueued.
+          description: Batch accepted. status is initiated; from_number identifies the selected outbound number. No scheduling-conflict warning is returned.
           content:
             application/json:
               schema:
@@ -75,11 +92,13 @@ paths:
                   id:
                     type: string
                     example: batch_abc123
-                  title:
-                    type: string
                   total_records:
                     type: number
                     example: 250
+                  dnd_skipped_count:
+                    type: number
+                    example: 0
+                    description: Leads left out because their number is on the workspace's DND list
                   status:
                     type: string
                     example: initiated
@@ -87,125 +106,139 @@ paths:
                     type:
                     - string
                     - 'null'
-                  warning:
-                    type: object
-                    description: Non-blocking scheduling warning returned when another running, waiting, or nearby scheduled batch may delay this batch.
-                    properties:
-                      message:
-                        type: string
-                      conflicts:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            kind:
-                              type: string
-                              enum:
-                              - running
-                              - waiting
-                              - scheduled
-                            batch_name:
-                              type: string
-                            processed_leads:
-                              type: number
-                            total_leads:
-                              type: number
-                            starts_at:
-                              type: string
-                              format: date-time
+                  title:
+                    type: string
               examples:
                 success:
                   summary: Successful response
                   value:
                     id: batch_abc123
-                    title: Q3 Follow-up Batch
                     total_records: 250
+                    dnd_skipped_count: 0
                     status: initiated
                     from_number: '+14155552671'
-                    warning:
-                      message: This batch was created, but your organization already has 1 running batch ahead of it. Batches run one at a time per organization, so this batch may be delayed.
-                      conflicts:
-                      - kind: running
-                        batch_name: July renewals
-                        processed_leads: 42
-                        total_leads: 250
+                    title: Q3 Follow-up Batch
         '400':
-          description: Invalid file or missing required fields, the resolved agent version is unpublished, or no outbound phone number is attached to that version.
+          description: Invalid file, malformed rows or missing required fields, invalid retry or date fields, rows whose numbers fail validation (with validation_errors and invalid_row_count), the resolved agent version is unpublished, the agent has no outbound number, phone_number_id is not one of its outbound numbers (PHONE_NUMBER_NOT_LINKED), or the agent has several outbound numbers and none was chosen (PHONE_NUMBER_REQUIRED, with phone_number_ids in data).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 400 Bad Request
                   value:
-                    statusCode: 400
-                    message: The uploaded file must include a phone_number column
-                    error: Bad Request
+                    message: 'Request validation failed: No valid phone numbers found in CSV'
                 titleTooLong:
                   summary: Title too long
                   value:
-                    statusCode: 400
-                    message: title must be 35 characters or fewer (received 42).
-                    error: Bad Request
+                    message: 'Request validation failed: title must be 35 characters or fewer (received 42).'
                 unpublishedVersion:
                   summary: Agent version is still a draft
                   value:
-                    statusCode: 400
-                    message: Version 2 of agent agent_abc123 is a draft. Publish it before starting a batch call.
-                    error: Bad Request
+                    message: 'Request validation failed: Version 2 of agent agent_abc123 is a draft. Publish it before starting a call.'
+                phoneNumberNotLinked:
+                  summary: 400 Bad Request
+                  value:
+                    message: 'Request validation failed: Phone number phn_abc123 is not an outbound number of agent agent_abc123.'
+                    data:
+                      code: PHONE_NUMBER_NOT_LINKED
+                phoneNumberRequired:
+                  summary: 400 Bad Request
+                  value:
+                    message: 'Request validation failed: Agent agent_abc123 has 2 outbound numbers. Pass phone_number_id to choose which one to dial from.'
+                    data:
+                      code: PHONE_NUMBER_REQUIRED
+                      phone_number_ids:
+                      - phn_abc123
+                      - phn_def456
+                allNumbersOnDnd:
+                  summary: Every number is on the DND list
+                  value:
+                    message: 'Request validation failed: All 2 numbers in this file are on your workspace''s DND list, so there is nothing to call.'
+                rowValidation:
+                  summary: Rows whose numbers fail validation
+                  value:
+                    message: 'Request validation failed: 1 phone number failed validation.
+
+                      Phone Number "12345" Could Not Be Parsed. Use International Format Such As +447700900123. (row: 3)'
+                    validation_errors:
+                    - error: Phone Number "12345" Could Not Be Parsed. Use International Format Such As +447700900123.
+                      rows:
+                      - 3
+                      phone_numbers:
+                      - '12345'
+                    invalid_row_count: 1
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden.
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
+        '402':
+          description: The workspace has no billing plan or no spendable balance, or its monthly spend cap is reached.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
-                  summary: 403 Forbidden
+                  summary: 402 Payment Required
                   value:
-                    statusCode: 403
-                    message: Destination country or network prefix is not enabled for this workspace
-                    error: Forbidden
-        '404':
-          description: Agent not found in the workspace, or the requested agent version does not exist.
+                    message: Insufficient wallet credits. Please recharge to create campaigns.
+                spendCapReached:
+                  summary: Monthly spend cap reached
+                  value:
+                    message: Monthly spend cap reached (₹5,000.00 of ₹5,000.00 used). Raise it in Billing → Balance alerts, or it resets on 1 Nov.
+        '403':
+          description: The workspace owner's KYC is not verified and a lead's phone number is not the owner's registered number (not enforced for SIP numbers).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
+              examples:
+                error:
+                  summary: 'KYC pending: destinations limited to the owner''s registered phone'
+                  value:
+                    message: Verify Your KYC to schedule a batch
+        '404':
+          description: Agent not found in the workspace, the requested agent version does not exist, or the uploaded file is not a .csv, .xls or .xlsx file (Unsupported file type).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 versionNotFound:
                   summary: Agent version not found
                   value:
-                    statusCode: 404
                     message: 'Agent agent_abc123 has no version 9. Published versions: 1, 3.'
-                    error: Not Found
+        '413':
+          description: The uploaded file is larger than 10 MB.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredErrorResponse'
+              examples:
+                error:
+                  summary: 413 Payload Too Large
+                  value:
+                    message: An unexpected error occurred. Please try again later.
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: Create Batch Call
@@ -214,23 +247,53 @@ paths:
     get:
       operationId: listBatchCalls
       parameters:
-      - name: limit
-        required: false
-        in: query
-        schema:
-          example: 20
-          type: number
       - name: page
         required: false
         in: query
+        description: Page number, starting from 1.
         schema:
-          example: 1
-          type: number
+          minimum: 1
+          default: 1
+          type: integer
+      - name: limit
+        required: false
+        in: query
+        description: Results per page.
+        schema:
+          minimum: 1
+          default: 30
+          type: integer
+      - name: sortBy
+        required: false
+        in: query
+        description: Field to sort by.
+        schema:
+          default: created_at
+          type: string
+          enum:
+          - created_at
+          - updated_at
+          - createdAt
+          - updatedAt
+          - title
+          - status
+          - id
+      - name: sortOrder
+        required: false
+        in: query
+        description: Sort direction.
+        schema:
+          default: DESC
+          type: string
+          enum:
+          - ASC
+          - DESC
       - name: status
         required: false
         in: query
-        description: Filter by batch status - can be a single status or comma-separated list. Supported values include draft, waiting, scheduled, running, paused, completed, cancelled, deleted, and legacy active.
+        description: 'Filter by batch status. One value or a comma-separated list of: draft, active, running, paused, completed, cancelled, deleted, scheduled, waiting.'
         schema:
+          example: running,paused
           type: string
       responses:
         '200':
@@ -238,180 +301,72 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          example: batch_abc123
-                        title:
-                          type: string
-                        status:
-                          type: string
-                        total_records:
-                          type: number
-                        createdAt:
-                          type: string
-                          format: date-time
-                        total_lead_count:
-                          type: number
-                          description: Total recipients loaded into the batch.
-                        sent_lead_count:
-                          type: number
-                          description: Initial recipient calls that have been sent.
-                        picked_up_lead_count:
-                          type: number
-                          description: Legacy connected-recipient counter retained for compatibility. Prefer picked_up_calls for the current Picked Up rollup.
-                        picked_up_calls:
-                          type: number
-                          description: Completed call attempts across initial calls and retry children. In-progress and unanswered outcomes are excluded.
-                        last_call_sent_at:
-                          type:
-                          - string
-                          - 'null'
-                          format: date-time
-                          description: Latest dispatch time across initial calls and retry children.
-                        number_of_retries:
-                          type:
-                          - number
-                          - 'null'
-                          description: Configured retry count.
-                        first_retry_count:
-                          type:
-                          - number
-                          - 'null'
-                          description: Retry call logs scheduled for the first retry depth.
-                        second_retry_count:
-                          type:
-                          - number
-                          - 'null'
-                          description: Retry call logs scheduled for the second retry depth.
-                        third_retry_count:
-                          type:
-                          - number
-                          - 'null'
-                          description: Retry call logs scheduled for the third retry depth.
-                        fourth_retry_count:
-                          type:
-                          - number
-                          - 'null'
-                          description: Retry call logs scheduled for the fourth retry depth.
-                        attempt_stages:
-                          type: array
-                          description: Per-stage attempt progress. Depth 0 is the initial call, and depths 1 through 4 are retry stages. Present when retry enrichment is available.
-                          items:
-                            type: object
-                            properties:
-                              depth:
-                                type: number
-                                example: 0
-                              attempted:
-                                type: number
-                                example: 240
-                              total:
-                                type: number
-                                example: 250
-                  total:
-                    type: number
-                  page:
-                    type: number
-                  limit:
-                    type: number
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: batch_abc123
+                    status:
+                      type: string
+                      description: Current batch status, for example waiting, scheduled, running, paused, completed or cancelled.
+                    title:
+                      type: string
+                    created_at:
+                      type: string
+                      format: date-time
+                      description: When the batch was created.
               examples:
                 success:
                   summary: Successful response
                   value:
-                    items:
-                    - id: batch_abc123
-                      title: Q3 Follow-up Batch
-                      status: waiting
-                      total_records: 250
-                      createdAt: '2026-07-03T10:30:00.000Z'
-                      total_lead_count: 250
-                      sent_lead_count: 240
-                      picked_up_lead_count: 120
-                      picked_up_calls: 116
-                      last_call_sent_at: '2026-07-03T11:42:18.000Z'
-                      number_of_retries: 2
-                      first_retry_count: 80
-                      second_retry_count: 25
-                      third_retry_count: 0
-                      fourth_retry_count: 0
-                      attempt_stages:
-                      - depth: 0
-                        attempted: 240
-                        total: 250
-                      - depth: 1
-                        attempted: 60
-                        total: 80
-                      - depth: 2
-                        attempted: 10
-                        total: 25
-                    total: 1
-                    page: 1
-                    limit: 20
+                  - id: batch_abc123
+                    status: waiting
+                    title: Q3 Follow-up Batch
         '400':
           description: Invalid query parameters.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 400 Bad Request
                   value:
-                    statusCode: 400
-                    message: Invalid query parameters
-                    error: Bad Request
+                    message: 'Request validation failed: page must not be less than 1'
+                invalidStatus:
+                  summary: Unknown status filter
+                  value:
+                    message: 'Request validation failed: Error fetching campaigns: Invalid campaign status filter: done. Allowed values: draft, active, running, paused, completed, cancelled, deleted, scheduled, waiting.'
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: Destination country or network prefix is not enabled for this workspace
-                    error: Forbidden
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       summary: List Batch Calls
       tags:
       - Batch Calls
-      description: Returns batch call jobs for the authenticated workspace, including status and progress fields.
+      description: Returns a page of batch jobs, newest first by default, as a root JSON array of ID, title, status, and creation time.
   /v1/batch-calls/{id}:
     get:
       operationId: getBatchCall
@@ -426,7 +381,7 @@ paths:
       - name: agent_id
         required: false
         in: query
-        description: Filter by agent ID(s) - can be a single ID or comma-separated list (e.g., 1,2,3)
+        description: 'Filter by agent ID: one ID or a comma-separated list (e.g., agent_abc,agent_def). Ignored when agent_version_id is sent, and replaced by agent_version_name when that name matches a version.'
         schema:
           type: string
       - name: call_id
@@ -435,60 +390,37 @@ paths:
         description: Filter by call ID - can be a single ID or comma-separated list (e.g., call_abc,call_def)
         schema:
           type: string
-      - name: batch_call_id
-        required: false
-        in: query
-        description: Filter by batch call ID - can be a single ID or comma-separated list (e.g., batch_abc,batch_def)
-        schema:
-          type: string
       - name: from
         required: false
         in: query
-        description: Filter by sender phone number
+        description: Filter by the workspace phone number on the call (the number dialled from, or for an inbound call the number that was called), as a partial match on its digits.
         schema:
           type: string
       - name: to
         required: false
         in: query
-        description: Filter by recipient phone number
+        description: Filter by recipient phone number, as a partial match on the batch lead's number as stored. The value is not reduced to digits, and Indian lead numbers are stored as `91XXXXXXXXXX` without `+`, so send digits only. Only batch calls carry a lead, so single calls and retry attempts never match this filter.
         schema:
           type: string
       - name: type
         required: false
         in: query
-        description: Filter by call type(s) - can be a single value or comma-separated list
+        description: 'Filter by call type: one value or a comma-separated list of `phone`, `web`.'
         schema:
           type: string
-          enum:
-          - phone
-          - web
       - name: call_direction
         required: false
         in: query
-        description: Filter by call direction(s) - can be a single value or comma-separated list
+        description: 'Filter by call direction: one value or a comma-separated list of `inbound`, `outbound`.'
         schema:
           type: string
-          enum:
-          - inbound
-          - outbound
-      - name: latency_min
-        required: false
-        in: query
-        description: Filter by minimum latency (in milliseconds)
-        schema:
-          type: number
-      - name: latency_max
-        required: false
-        in: query
-        description: Filter by maximum latency (in milliseconds)
-        schema:
-          type: number
       - name: agent_version_id
         required: false
         in: query
-        description: Filter by agent version ID(s) - can be a single ID or comma-separated list (e.g., 1,2,3)
+        description: Filter batch calls by agent version, written as `<agent_id>-<version_number>` (for example `agent_2g7Xy3tY53gRlp-3`); one value or a comma-separated list. Only calls placed by a batch match. A value in any other format is ignored, and when no value is valid the whole filter is dropped. When this parameter is sent, `agent_id` is not applied.
         schema:
           type: string
+          example: agent_2g7Xy3tY53gRlp-3
       - name: agent_version_name
         required: false
         in: query
@@ -498,64 +430,67 @@ paths:
       - name: sentiment
         required: false
         in: query
-        description: Filter by sentiment(s) - can be a single value or comma-separated list
+        description: 'Filter by user sentiment: one value or a comma-separated list of `positive`, `neutral`, `negative`, `unknown`.'
         schema:
           type: string
-          enum:
-          - positive
-          - neutral
-          - negative
-          - unknown
       - name: start_date
         required: false
         in: query
-        description: Filter by start date (ISO format)
+        description: Return calls created on or after the start of this day in UTC (ISO 8601). The value is converted to UTC first, then widened to 00:00:00 UTC of that day, so a time with an offset can move the day. Send a plain date (`YYYY-MM-DD`).
         schema:
           type: string
       - name: end_date
         required: false
         in: query
-        description: Filter by end date (ISO format)
+        description: Return calls created on or before the end of this day in UTC (ISO 8601). The value is converted to UTC first, then widened to 23:59:59.999 UTC of that day, so a time with an offset can move the day. Send a plain date (`YYYY-MM-DD`).
         schema:
           type: string
       - name: duration_greater_than
         required: false
         in: query
-        description: Filter by minimum call duration (in milliseconds)
+        description: Return calls longer than this many seconds.
         schema:
+          minimum: 0
           type: number
       - name: duration_less_than
         required: false
         in: query
-        description: Filter by maximum call duration (in milliseconds)
+        description: Return calls shorter than this many seconds.
         schema:
+          minimum: 0
           type: number
       - name: duration_min
         required: false
         in: query
-        description: Filter by minimum duration range (in milliseconds)
+        description: Lower bound of a duration range in seconds, inclusive. Applied only together with duration_max; sent alone it is ignored.
         schema:
+          minimum: 0
           type: number
       - name: duration_max
         required: false
         in: query
-        description: Filter by maximum duration range (in milliseconds)
+        description: Upper bound of a duration range in seconds, inclusive. Applied only together with duration_min; sent alone it is ignored.
         schema:
+          minimum: 0
           type: number
       - name: page
         required: false
         in: query
         description: Page number (starts from 1)
         schema:
+          minimum: 1
           example: 1
-          type: number
+          type: integer
       - name: limit
         required: false
         in: query
-        description: 'Number of records per page (min: 1, default: 20, max: 200)'
+        description: Number of records per page. Minimum 1, maximum 200.
         schema:
+          minimum: 1
+          maximum: 200
+          default: 20
           example: 20
-          type: number
+          type: integer
       - name: created_at
         required: false
         in: query
@@ -577,28 +512,61 @@ paths:
       - name: status
         required: false
         in: query
-        description: Filter by call status(es) - can be a single status or comma-separated list
+        description: 'Filter by call status: one value or a comma-separated list, for example completed,failed. Values: initiated, received, sent, did_not_pick, busy, failed, no_answer, completed, created, cancelled, retry_expired. An unknown value returns 400.'
         schema:
           type: string
       - name: export
         required: false
         in: query
-        description: Set to true to export all data without pagination
+        description: Set to `true` to return every matching call in one JSON array without pagination, up to the export row limit, including retry attempts. Omit it or send `false` to receive pages. For a batch export, the row limit counts the original calls only; retry attempts are added on top, so the array can be longer.
         schema:
           type: boolean
       - name: end_reason
         required: false
         in: query
-        description: Filter by end/hangup reason - exact match; comma-separate multiple values for OR filtering
+        description: 'Filter by why the call ended: one value or a comma-separated list of `agent_disconnected`, `user_disconnected`, `user_busy`, `user_did_not_pick_up`, `invalid_phone_number`, `unallocated_phone_number`, `unknown`, `network_failure`, `voicemail_detected`, `user_unreachable`, `destination_forbidden`, `system_failure`, `system_at_capacity`, `insufficient_balance`, `agent_not_found`, `sip_auth_failed`, `sip_trunk_unreachable`, `spend_cap_reached`, `dnd_blocked`. Unknown values are ignored; if no value is known, no calls match.'
         schema:
           type: string
+      - name: is_ivr
+        required: false
+        in: query
+        description: Filter by whether the call was handled by an IVR agent (matched by the call's agent and/or the IVR billing flag, so both promoted/transferred and pure menu calls count). true = IVR calls only; false = non-IVR calls only; omit for all.
+        schema:
+          type: boolean
+      - name: tags
+        required: false
+        in: query
+        description: 'Filter by lead tags: the tags attached to the workflow lead when its leads file was uploaded, snapshotted onto the call when it was placed. Comma-separated for multiple values. Matching is case-insensitive because tags are normalized to lowercase on upload. Use tags_match to choose ANY (default) or ALL.'
+        schema:
+          example: priority,q3-campaign
+          type: string
+      - name: tags_match
+        required: false
+        in: query
+        description: 'How multiple `tags` values combine: "any" returns calls carrying at least one of them (default), "all" returns only calls carrying every one of them.'
+        schema:
+          default: any
+          type: string
+          enum:
+          - any
+          - all
       - name: columns
         required: false
         in: query
-        description: 'Export only: comma-separated column keys. Omitting both transcript and summary raises the single-export limit from 5000 to 10000 rows. Omit this parameter to include all columns.'
+        description: 'Export only: comma-separated list of column keys being exported (e.g. "duration,status,end_reason"). Lets the server skip fetching heavy columns nobody asked for, which raises the export row limit. Omit to fetch everything, as before.'
         schema:
           type: string
-          example: duration,status,agent_name
+      - name: agent_type
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - single_prompt
+          - conversational_flow
+          - speech_to_speech
+          - ivr
+        description: Filter by agent type. ivr is equivalent to is_ivr=true and includes IVR handoffs. Other types require an agent ID retained on the call; calls without one do not match those types.
       responses:
         '200':
           description: Calls in the batch returned successfully.
@@ -606,126 +574,144 @@ paths:
             application/json:
               examples:
                 success:
-                  summary: Successful response
+                  summary: Calls in the batch
                   value:
-                    callLogs:
-                    - id: call_abc123
-                      agent_id: agent_2g7Xy3tY53gRlp
-                      to_number: '+919876543210'
-                      from_number: '+14155552671'
-                      status: initiated
-                      call_direction: outbound
-                      createdAt: '2026-07-03T10:30:00.000Z'
-                      batch_id: batch_abc123
-                    total: 1
-                    page: 1
-                    limit: 20
-                    totalPages: 1
+                  - id: call_abc123
+                    agent_id: agent_2g7Xy3tY53gRlp
+                    batch_id: batch_abc123
+                    to_number: '919876543210'
+                    phone_number_id: phn_abc123
+                    duration: '42'
+                    status: completed
+                    end_reason: user_disconnected
+                    llm_name: gpt-4o
               schema:
-                type: object
-                properties:
-                  callLogs:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          example: call_abc123
-                        status:
-                          type: string
-                          example: completed
-                        from_number:
-                          type: string
-                          example: '+14155552671'
-                        to_number:
-                          type: string
-                          example: '+919876543210'
-                        duration:
-                          type: number
-                          example: 42
-                        createdAt:
-                          type: string
-                          format: date-time
-                  total:
-                    type: number
-                  page:
-                    type: number
-                  limit:
-                    type: number
-                  totalPages:
-                    type: number
+                type: array
+                description: The calls created for this batch, one record per lead. Paginated with page and limit unless export=true; retry attempts appear only with export=true.
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: call_abc123
+                      description: Signed call ID.
+                    agent_id:
+                      type:
+                      - string
+                      - 'null'
+                      example: agent_2g7Xy3tY53gRlp
+                      description: Agent that handled the call.
+                    batch_id:
+                      type:
+                      - string
+                      - 'null'
+                      example: batch_abc123
+                      description: Signed batch ID of the batch the call belongs to; null for single calls and for retry attempts.
+                    to_number:
+                      type:
+                      - string
+                      - 'null'
+                      example: '919876543210'
+                      description: 'Destination number as recorded on the call: the number as sent for a single call, and the lead''s number as stored for a batch call, where an Indian number appears as `91XXXXXXXXXX` without `+`.'
+                    phone_number_id:
+                      type:
+                      - string
+                      - 'null'
+                      example: phn_abc123
+                      description: ID of the workspace phone number the call was placed from.
+                    called_time:
+                      type:
+                      - string
+                      - 'null'
+                      format: date-time
+                      description: When the call was placed.
+                    duration:
+                      type:
+                      - string
+                      - 'null'
+                      example: '42'
+                      description: Call duration in seconds, serialized as a string (the column is a 64-bit integer); null until a duration is recorded.
+                    status:
+                      type: string
+                      example: completed
+                      description: Current call status.
+                    initiated_time:
+                      type:
+                      - string
+                      - 'null'
+                      format: date-time
+                      description: When the call was initiated on the telephony side.
+                    end_reason:
+                      type:
+                      - string
+                      - 'null'
+                      example: user_disconnected
+                      description: Why the call ended; `unknown` until the call ends. One of `agent_disconnected`, `user_disconnected`, `user_busy`, `user_did_not_pick_up`, `invalid_phone_number`, `unallocated_phone_number`, `unknown`, `network_failure`, `voicemail_detected`, `user_unreachable`, `destination_forbidden`, `system_failure`, `system_at_capacity`, `insufficient_balance`, `agent_not_found`, `sip_auth_failed`, `sip_trunk_unreachable`, `spend_cap_reached`, `dnd_blocked`.
+                    postcallanalysis:
+                      type:
+                      - object
+                      - 'null'
+                      additionalProperties: true
+                      description: Post-call analysis fields extracted for this call, keyed by field name. An empty object until analysis has run.
+                    llm_name:
+                      type:
+                      - string
+                      - 'null'
+                      example: gpt-4o
+                      description: Display name of the language model used on the call.
+                    voice_model_name:
+                      type:
+                      - string
+                      - 'null'
+                      description: Display name of the voice used on the call.
+                    recording_sas_url:
+                      type:
+                      - string
+                      - 'null'
+                      description: Time-limited link to the recording. Absent from the response unless export=true.
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: Destination country or network prefix is not enabled for this workspace
-                    error: Forbidden
-        '404':
-          description: Batch call not found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 404 Not Found
-                  value:
-                    statusCode: 404
-                    message: Batch call not found
-                    error: Not Found
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
+                    message: An unexpected error occurred. Please try again later.
         '400':
-          description: Invalid batch call ID format.
+          description: Invalid query parameters.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 400 Bad Request
                   value:
-                    statusCode: 400
-                    message: Invalid batch call ID format
-                    error: Bad Request
+                    message: 'Request validation failed: limit must not be greater than 200'
+                unknownFilterValue:
+                  summary: Unknown filter value
+                  value:
+                    message: 'Request validation failed: Invalid status filter value: foo. Allowed values: initiated, received, sent, did_not_pick, busy, failed, no_answer, completed, created, cancelled, retry_expired'
       security:
       - bearer: []
       summary: Get Batch Call Details
       tags:
       - Batch Calls
-      description: Returns one batch call job and its current processing details.
+      description: Returns the calls created for one batch as a root JSON array, paginated with page and limit unless export=true. An unknown batch ID, or one from another workspace, returns an empty array. Paginated results leave out retry attempts; export=true includes them.
   /v1/batch-calls/{id}/status:
     patch:
       operationId: updateBatchCallStatus
@@ -744,18 +730,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - action
-              properties:
-                action:
-                  type: string
-                  enum:
-                  - pause
-                  - resume
-                  - cancel
-                  example: pause
-                  description: The status transition to apply.
+              $ref: '#/components/schemas/UpdateBatchCallStatusRequest'
             examples:
               pause:
                 summary: Pause a batch call
@@ -777,159 +752,234 @@ paths:
               examples:
                 success:
                   summary: Successful response
-                  value:
-                    success: true
-                    message: Campaign paused successfully
-                    campaign:
-                      id: batch_abc123
-                      status: paused
-                      title: Q3 Follow-up Batch
-                    affectedCalls:
-                      initiated: 0
-                      queued: 0
-                      removedFromQueue: 12
-                      cancelledCallLogs: 0
-                      resumedCallLogs: 0
+                  value: {}
               schema:
                 type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Campaign paused successfully
-                  campaign:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        example: batch_abc123
-                      status:
-                        type: string
-                        enum:
-                        - initiated
-                        - draft
-                        - waiting
-                        - scheduled
-                        - running
-                        - paused
-                        - completed
-                        - cancelled
-                        - deleted
-                        example: paused
-                      title:
-                        type: string
-                        example: Q3 Follow-up Batch
-                  affectedCalls:
-                    type: object
-                    properties:
-                      initiated:
-                        type: number
-                        example: 0
-                      queued:
-                        type: number
-                        example: 0
-                      removedFromQueue:
-                        type: number
-                        example: 12
-                      cancelledCallLogs:
-                        type: number
-                        example: 0
-                      resumedCallLogs:
-                        type: number
-                        example: 0
+                properties: {}
         '400':
           description: Invalid action, or action not allowed for the current batch call status.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 400 Bad Request
                   value:
-                    statusCode: 400
-                    message: 'Invalid action. Must be one of: pause, resume, cancel'
-                    error: Bad Request
+                    message: 'Request validation failed: action must be one of the following values: pause, resume, cancel'
+                notAllowed:
+                  summary: Action not allowed for the batch status
+                  value:
+                    message: 'Request validation failed: Campaign status ''paused'' is not allowed. Required status: running or waiting'
+                finalState:
+                  summary: Batch already finished
+                  value:
+                    message: 'Request validation failed: Campaign status ''completed'' is not allowed. Campaign is already in a final state.'
         '401':
           description: Unauthorized - missing or invalid API key.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 401 Unauthorized
                   value:
-                    statusCode: 401
-                    message: API key is missing or invalid
-                    error: Unauthorized
-        '403':
-          description: Forbidden - batch call does not belong to your organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                error:
-                  summary: 403 Forbidden
-                  value:
-                    statusCode: 403
-                    message: You do not have permission to access this resource
-                    error: Forbidden
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
         '404':
           description: Batch call not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 404 Not Found
                   value:
-                    statusCode: 404
-                    message: Batch call not found
-                    error: Not Found
+                    message: Campaign with ID 2g7Xy3tY53gRlp not found
         '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/FilteredErrorResponse'
               examples:
                 error:
                   summary: 500 Internal Server Error
                   value:
-                    statusCode: 500
-                    message: Internal server error
-                    error: Internal Server Error
+                    message: An unexpected error occurred. Please try again later.
       security:
       - bearer: []
       tags:
       - Batch Calls
+  /v1/batch-calls/{id}/phone-number:
+    patch:
+      operationId: changeBatchCallPhoneNumber
+      summary: Change Batch Call Phone Number
+      description: Changes the From number for a draft, scheduled, or paused batch to another outbound number linked to its agent. Pause running or waiting batches first and wait for in-progress calls to finish. Undialed calls and parked retries use the new number; placed calls keep their original number. The agent version and batch status stay the same.
+      tags:
+      - Batch Calls
+      security:
+      - bearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: batch_abc123
+        description: Batch ID from List Batch Calls.
+      responses:
+        '200':
+          description: The number was changed. API-key callers receive an empty object because the response projection omits the control result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+              examples:
+                success:
+                  value: {}
+        '400':
+          description: 'PHONE_NUMBER_NOT_LINKED: choose an outbound number of this agent. BATCH_TERMINAL: a batch whose status is completed, cancelled or deleted cannot change numbers. Invalid request bodies also return 400.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredErrorResponse'
+              examples:
+                error:
+                  value:
+                    message: 'Request validation failed: phone_number_id must be a string'
+                batchTerminal:
+                  summary: 400 Bad Request
+                  value:
+                    message: 'Request validation failed: Batch "Q3 Follow-up Batch" is completed; its number can no longer change.'
+                    data:
+                      code: BATCH_TERMINAL
+                phoneNumberNotLinked:
+                  summary: 400 Bad Request
+                  value:
+                    message: 'Request validation failed: Phone number phn_2g7Xy3tY53gRlp is not an outbound number of agent agent_mgao6051Rk718Y.'
+                    data:
+                      code: PHONE_NUMBER_NOT_LINKED
+        '404':
+          description: Batch not found in this workspace, including a batch that has been removed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredErrorResponse'
+              examples:
+                error:
+                  value:
+                    message: Campaign with ID 2g7Xy3tY53gRlp not found
+        '409':
+          description: 'BATCH_NOT_PAUSED: pause the batch first. BATCH_HAS_LIVE_CALLS: wait until its in-progress calls finish.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredErrorResponse'
+              examples:
+                error:
+                  value:
+                    message: Pause the batch before changing its phone number.
+                    data:
+                      code: BATCH_NOT_PAUSED
+                batchHasLiveCalls:
+                  summary: 409 Conflict
+                  value:
+                    message: 2 call(s) from this batch are still in progress. Wait for them to finish, then retry.
+                    data:
+                      code: BATCH_HAS_LIVE_CALLS
+                      live_calls: 2
+        '401':
+          description: The API key is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredErrorResponse'
+              examples:
+                error:
+                  summary: Invalid key
+                  value:
+                    message: API key is missing or invalid. You can generate this by logging in into dashboard
+        '500':
+          description: The request could not be completed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredErrorResponse'
+              examples:
+                error:
+                  summary: Server error
+                  value:
+                    message: An unexpected error occurred. Please try again later.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone_number_id:
+                  type: string
+                  description: One of the batch agent's outbound phone number IDs.
+                  example: phn_abc123
+              required:
+              - phone_number_id
+            examples:
+              request:
+                value:
+                  phone_number_id: phn_abc123
 components:
   schemas:
-    ErrorResponse:
+    FilteredErrorResponse:
+      type: object
+      description: Error body on calls, batch calls, voices, languages and LLMs, which return only the message (and data for a coded refusal).
+      properties:
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable refusal code.
+          description: 'Present for a coded refusal: code and the details listed for that code.'
+        validation_errors:
+          type: array
+          description: 'Present when uploaded rows fail number validation (batch and workflow lead uploads): one group per distinct error.'
+          items:
+            type: object
+            properties:
+              error:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: integer
+                description: Row numbers with this error.
+              phone_numbers:
+                type: array
+                items:
+                  type: string
+        invalid_row_count:
+          type: integer
+          description: 'Present with validation_errors: how many rows failed.'
+      required:
+      - message
+    UpdateBatchCallStatusRequest:
       type: object
       properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-          example: phone_number must be a valid E.164 phone number
-        error:
+        action:
           type: string
-          example: Bad Request
+          enum:
+          - pause
+          - resume
+          - cancel
+          description: pause stops new outbound calls and keeps the batch resumable; resume re-enqueues the remaining leads; cancel removes queued calls and cannot be resumed. cancel works from any state except completed or cancelled, including running.
+          example: pause
       required:
-      - statusCode
-      - message
-      - error
+      - action
   securitySchemes:
     bearer:
       scheme: bearer
